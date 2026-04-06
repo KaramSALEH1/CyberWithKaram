@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Lesson;
+use App\Models\Module;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -14,39 +15,6 @@ class AdminController extends Controller
         $services = Service::all();
         $lessons = Lesson::orderBy('order_no')->get();
         return view('dashboard', compact('services', 'lessons'));
-    }
-
-    // حفظ خدمة جديدة أو تحديث موجودة
-    public function storeService(Request $request)
-    {
-        $request->validate([
-            'title' => 'required',
-            'category' => 'required',
-            'description' => 'required',
-        ]);
-
-        Service::updateOrCreate(
-            ['slug' => \str()::slug($request->title)],
-            [
-                'title' => $request->title,
-                'category' => $request->category,
-                'description' => $request->description,
-                'icon' => $request->icon ?? '🛠️',
-                'is_automated' => $request->has('is_automated'),
-            ]
-        );
-
-        return back()->with('success', 'Service updated successfully!');
-    }
-
-    // إظهار أو إخفاء خدمة
-    public function toggleService($id)
-    {
-        $service = Service::findOrFail($id);
-        $service->is_visible = !$service->is_visible;
-        $service->save();
-
-        return back();
     }
 
     // إضافة درس كورس جديد
@@ -61,11 +29,17 @@ class AdminController extends Controller
         parse_str(parse_url($request->youtube_url, PHP_URL_QUERY), $vars);
         $videoId = $vars['v'] ?? $request->youtube_url;
 
+        $moduleId = Module::query()->value('id');
+        if (!$moduleId) {
+            return back()->withErrors(['lesson' => 'Create a module first before adding lessons from dashboard.']);
+        }
+
         Lesson::create([
+            'module_id' => $moduleId,
             'title' => $request->title,
-            'youtube_url' => $videoId,
-            'description' => $request->description ?? '',
-            'order_no' => Lesson::count() + 1,
+            'video_url' => $videoId,
+            'content' => $request->description ?? '',
+            'order_no' => Lesson::where('module_id', $moduleId)->count() + 1,
         ]);
 
         return back()->with('success', 'Lesson added to your course!');

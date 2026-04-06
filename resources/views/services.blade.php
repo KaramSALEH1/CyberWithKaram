@@ -13,10 +13,16 @@
             @foreach ($services as $service)
                 <div
                     class="bg-gray-800/50 p-10 border border-gray-800 rounded-2xl hover:border-karam-green transition duration-300">
-                    <div class="text-5xl mb-6">{{ $service->icon }}</div>
+                    <div class="mb-6">
+                        @if($service->logo_url)
+                            <img src="{{ $service->logo_url }}" alt="{{ $service->title }}" class="h-14 object-contain">
+                        @else
+                            <div class="text-5xl">{{ $service->icon }}</div>
+                        @endif
+                    </div>
                     <h3 class="text-2xl font-bold mb-4">{{ $service->title }}</h3>
                     <p class="text-gray-400 leading-relaxed mb-6">{{ $service->description }}</p>
-                    <a href="{{ route('contact') }}" class="text-karam-green font-bold hover:underline">Get Started →</a>
+                    <a href="{{ route('service.show', $service->slug) }}" class="text-karam-green font-bold hover:underline">View Details →</a>
                 </div>
             @endforeach
         </div>

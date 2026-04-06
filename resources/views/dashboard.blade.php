@@ -5,11 +5,19 @@
         <div class="max-w-7xl mx-auto px-6">
             <h1 class="text-3xl font-black mb-10">CyberWithKaram <span class="text-karam-green">Command Center</span></h1>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <aside class="lg:col-span-1 bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl h-fit">
+                    <h2 class="text-lg font-bold text-karam-green mb-4">Admin Navigation</h2>
+                    <nav class="space-y-2 text-sm">
+                        <a href="{{ route('admin.services.index') }}" class="block bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:border-karam-green">Service Management</a>
+                        <a href="{{ route('admin.academy.index') }}" class="block bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:border-karam-green">Academy Management</a>
+                        <a href="{{ route('admin.command-center.index') }}" class="block bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 hover:border-karam-green">Agent Command Center</a>
+                    </nav>
+                </aside>
 
-                <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl">
+                <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl lg:col-span-3">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-karam-green">Manage Services</h2>
+                        <h2 class="text-xl font-bold text-karam-green">Services Snapshot</h2>
                         <span class="text-xs text-gray-500">{{ \App\Models\Service::count() }} Total</span>
                     </div>
 
@@ -23,22 +31,19 @@
                                         {{ $service->is_automated ? 'Automated' : 'Manual' }}</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <form action="{{ route('admin.services.toggle', $service->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit"
-                                            class="px-3 py-1 rounded text-xs font-bold {{ $service->is_visible ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400' }}">
-                                            {{ $service->is_visible ? 'Visible' : 'Hidden' }}
-                                        </button>
-                                    </form>
+                                    <span class="px-3 py-1 rounded text-xs font-bold {{ $service->is_visible ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400' }}">{{ $service->is_visible ? 'Visible' : 'Hidden' }}</span>
+                                    <a href="{{ route('admin.services.show', $service) }}" class="px-3 py-1 rounded text-xs font-bold bg-gray-700">Control</a>
                                 </div>
                             </div>
                         @endforeach
                     </div>
+                    <div class="mt-5">
+                        <a href="{{ route('admin.services.index') }}" class="text-karam-green font-bold hover:underline">Open full Service Management -></a>
+                    </div>
                 </div>
-
-                <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl">
+                <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl lg:col-span-4">
                     <h2 class="text-xl font-bold text-blue-400 mb-6">Add New Course Lesson</h2>
-                    <form action="{{ route('admin.lessons.store') }}" method="POST" class="space-y-4">
+                    <form action="{{ route('admin.dashboard.lesson.store') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Lesson Title</label>

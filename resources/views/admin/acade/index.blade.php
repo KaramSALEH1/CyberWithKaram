@@ -56,6 +56,10 @@
                 <option value="Advanced">Advanced</option>
             </select>
             <textarea name="description" placeholder="Summary" class="w-full bg-gray-900 border-gray-700 rounded-lg p-3 text-white h-24"></textarea>
+            <label class="flex items-center gap-2 text-xs text-gray-300">
+                <input type="checkbox" name="requires_purchase" value="1" class="rounded border-gray-600 bg-gray-900">
+                Require payment for this course
+            </label>
             <div class="flex gap-2">
                 <button type="submit" class="flex-1 bg-karam-green py-3 rounded-lg font-bold">Save</button>
                 <button type="button" onclick="this.closest('#courseModal').classList.add('hidden')" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold">Cancel</button>
@@ -71,6 +75,10 @@
             @csrf
             <input type="hidden" name="course_id" id="course_id_input">
             <input type="text" name="title" placeholder="Module Title (e.g. Scanning Basics)" class="w-full bg-gray-900 border-gray-700 rounded-lg p-3 text-white outline-none focus:border-blue-400" required>
+            <label class="flex items-center gap-2 text-xs text-gray-300">
+                <input type="checkbox" name="requires_purchase" value="1" class="rounded border-gray-600 bg-gray-900">
+                Require payment for this module
+            </label>
             <div class="flex gap-2">
                 <button type="submit" class="flex-1 bg-blue-600 py-3 rounded-lg font-bold text-white">Add Module</button>
                 <button type="button" onclick="this.closest('#moduleModal').classList.add('hidden')" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold">Cancel</button>
@@ -88,6 +96,10 @@
             <input type="text" name="title" placeholder="Lesson Title" class="w-full bg-gray-900 border-gray-700 rounded-lg p-3 text-white outline-none focus:border-yellow-500" required>
             <input type="text" name="video_url" placeholder="YouTube Video ID (e.g. dQw4w9WgXcQ)" class="w-full bg-gray-900 border-gray-700 rounded-lg p-3 text-white outline-none focus:border-yellow-500" required>
             <textarea name="content" placeholder="Technical lesson notes (HTML/Text)..." class="w-full bg-gray-900 border-gray-700 rounded-lg p-3 text-white h-32"></textarea>
+            <label class="flex items-center gap-2 text-xs text-gray-300">
+                <input type="checkbox" name="requires_purchase" value="1" class="rounded border-gray-600 bg-gray-900">
+                Require payment for this lesson
+            </label>
             <div class="flex gap-2">
                 <button type="submit" class="flex-1 bg-yellow-600 py-3 rounded-lg font-bold text-white">Publish Lesson</button>
                 <button type="button" onclick="this.closest('#lessonModal').classList.add('hidden')" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold text-white">Cancel</button>

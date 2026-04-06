@@ -13,8 +13,17 @@ class Service extends Model
         'description',
         'full_description',
         'icon',
+        'logo_url',
         'is_automated',
         'is_visible',
         'script_code'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_automated' => 'boolean',
+            'is_visible' => 'boolean',
+        ];
+    }
 }

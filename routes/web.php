@@ -1,13 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\{
     AcademyController,
     AdminController,
+    Admin\CommandCenterController,
+    Admin\ServiceController,
     ProfileController,
     PageController
 };
-use App\Models\{Service, Lesson, Course};
+use App\Models\{Service, Lesson, Course, Module};
+use App\Services\Academy\EntitlementService;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,7 +20,9 @@ use App\Models\{Service, Lesson, Course};
 */
 
 Route::get('/', function () {
-    $services = Service::where('is_visible', true)->get();
+    $services = Schema::hasTable('services')
+        ? Service::where('is_visible', true)->get()
+        : collect();
     return view('welcome', compact('services'));
 })->name('home');
 
@@ -25,7 +31,9 @@ Route::get('/contact', fn() => view('contact'))->name('contact');
 
 // الخدمات
 Route::get('/services', function () {
-    $services = Service::where('is_visible', true)->get();
+    $services = Schema::hasTable('services')
+        ? Service::where('is_visible', true)->get()
+        : collect();
     return view('services', compact('services'));
 })->name('services');
 
@@ -40,6 +48,23 @@ Route::get('/courses', function () {
     return view('courses', compact('courses'));
 })->name('courses');
 
+Route::middleware(['auth', 'verified'])->prefix('academy')->group(function () {
+    Route::get('/courses/{course}', function (Course $course, EntitlementService $entitlementService) {
+        abort_unless($entitlementService->userHasCourseAccess(request()->user(), $course), 403);
+        return response()->json(['course' => $course]);
+    })->name('academy.course.show');
+
+    Route::get('/modules/{module}', function (Module $module, EntitlementService $entitlementService) {
+        abort_unless($entitlementService->userHasModuleAccess(request()->user(), $module), 403);
+        return response()->json(['module' => $module]);
+    })->name('academy.module.show');
+
+    Route::get('/lessons/{lesson}', function (Lesson $lesson, EntitlementService $entitlementService) {
+        abort_unless($entitlementService->userHasLessonAccess(request()->user(), $lesson->load('module.course')), 403);
+        return response()->json(['lesson' => $lesson]);
+    })->name('academy.lesson.show');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +76,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
     // الداشبورد الرئيسي
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::get('/command-center', [CommandCenterController::class, 'index'])->name('admin.command-center.index');
+    Route::post('/command-center/commands', [CommandCenterController::class, 'store'])->name('admin.command-center.commands.store');
+    Route::post('/command-center/commands/{command}/cancel', [CommandCenterController::class, 'cancel'])->name('admin.command-center.commands.cancel');
 
     // --- قسم الأكاديمية المطور ---
     Route::prefix('academy')->group(function () {
@@ -67,13 +95,21 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
         Route::post('/lesson/store', [AcademyController::class, 'storeLesson'])->name('admin.lesson.store');
     });
 
-    // --- قسم الخدمات السيبرانية ---
-    Route::prefix('services')->group(function () {
-        Route::post('/store', [AdminController::class, 'storeService'])->name('admin.services.store');
-        Route::post('/toggle/{id}', [AdminController::class, 'toggleService'])->name('admin.services.toggle');
-    });
+    Route::resource('/services', ServiceController::class)->names([
+        'index' => 'admin.services.index',
+        'create' => 'admin.services.create',
+        'store' => 'admin.services.store',
+        'show' => 'admin.services.show',
+        'edit' => 'admin.services.edit',
+        'update' => 'admin.services.update',
+        'destroy' => 'admin.services.destroy',
+    ]);
 
-    // --- إدارة الملف الشخصي ---
+    Route::post('/lessons/store', [AdminController::class, 'storeLesson'])->name('admin.dashboard.lesson.store');
+
+});
+
+Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
