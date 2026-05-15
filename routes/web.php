@@ -1,23 +1,23 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\{
     AcademyController,
     AdminController,
     Admin\CommandCenterController,
+    Admin\CourseController,
+    Admin\PaymentController as AdminPaymentController,
     Admin\ServiceController,
+    PaymentController,
     ProfileController,
-    PageController
+    UserToolController,
 };
+use App\Models\Payment;
+use App\Services\Payment\PaymentVerificationService;
 use App\Models\{Service, Lesson, Course, Module};
 use App\Services\Academy\EntitlementService;
-
-/*
-|--------------------------------------------------------------------------
-| Public Routes (المسارات العامة للزوار)
-|--------------------------------------------------------------------------
-*/
 
 Route::get('/', function () {
     $services = Schema::hasTable('services')
@@ -29,7 +29,6 @@ Route::get('/', function () {
 Route::get('/about', fn() => view('about'))->name('about');
 Route::get('/contact', fn() => view('contact'))->name('contact');
 
-// الخدمات
 Route::get('/services', function () {
     $services = Schema::hasTable('services')
         ? Service::where('is_visible', true)->get()
@@ -37,12 +36,34 @@ Route::get('/services', function () {
     return view('services', compact('services'));
 })->name('services');
 
-Route::get('/services/{slug}', function ($slug) {
-    $service = Service::where('slug', $slug)->firstOrFail();
-    return view('service-details', compact('service'));
+Route::get('/services/{service:slug}', function (Service $service, PaymentVerificationService $verificationService) {
+    $hasApprovedAccess = false;
+    $userLicenseKey = null; // To store the license key if purchased and approved
+
+    if (Auth::check()) {
+        // Check if the user has an approved payment for this service
+        $approvedPayment = Payment::query()
+            ->where('user_id', Auth::id())
+            ->where('service_id', $service->id)
+            ->where('status', 'approved')
+            ->latest()
+            ->first();
+
+        if ($approvedPayment) {
+            $hasApprovedAccess = true;
+            $userLicenseKey = $approvedPayment->license_key;
+        }
+    }
+
+    return view('service-details', compact('service', 'hasApprovedAccess', 'userLicenseKey'));
 })->name('service.show');
 
-// الأكاديمية (العرض للجمهور)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/services/{service:slug}/pay', [PaymentController::class, 'create'])->name('services.pay');
+    Route::post('/services/{service:slug}/pay', [PaymentController::class, 'store'])->name('services.pay.store');
+    Route::get('/services/{service:slug}/pay/global-success', [PaymentController::class, 'mockGlobalPaymentSuccess'])->name('payment.mock-global-success');
+});
+
 Route::get('/courses', function () {
     $courses = Course::with('modules.lessons')->where('is_active', true)->get();
     return view('courses', compact('courses'));
@@ -65,33 +86,23 @@ Route::middleware(['auth', 'verified'])->prefix('academy')->group(function () {
     })->name('academy.lesson.show');
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| Admin Routes (لوحة التحكم - تحتاج تسجيل دخول)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-
-    // الداشبورد الرئيسي
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::get('/command-center', [CommandCenterController::class, 'index'])->name('admin.command-center.index');
     Route::post('/command-center/commands', [CommandCenterController::class, 'store'])->name('admin.command-center.commands.store');
     Route::post('/command-center/commands/{command}/cancel', [CommandCenterController::class, 'cancel'])->name('admin.command-center.commands.cancel');
 
-    // --- قسم الأكاديمية المطور ---
+    Route::get('/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
+    Route::get('/payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
+    Route::post('/payments/{payment}/approve', [AdminPaymentController::class, 'approve'])->name('admin.payments.approve');
+    Route::post('/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->name('admin.payments.reject');
+
     Route::prefix('academy')->group(function () {
         Route::get('/', [AcademyController::class, 'index'])->name('admin.academy.index');
-
-        // الكورسات
+        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('admin.course.show');
         Route::post('/course/store', [AcademyController::class, 'storeCourse'])->name('admin.course.store');
         Route::delete('/course/{id}', [AcademyController::class, 'destroyCourse'])->name('admin.course.delete');
-
-        // الوحدات (Modules)
         Route::post('/module/store', [AcademyController::class, 'storeModule'])->name('admin.module.store');
-
-        // الدروس (Lessons)
         Route::post('/lesson/store', [AcademyController::class, 'storeLesson'])->name('admin.lesson.store');
     });
 
@@ -106,13 +117,15 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     ]);
 
     Route::post('/lessons/store', [AdminController::class, 'storeLesson'])->name('admin.dashboard.lesson.store');
-
 });
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/my-tools', [UserToolController::class, 'index'])->name('my-tools.index');
+    Route::get('/my-tools/download-agent/{service_id}/{license_key}', [UserToolController::class, 'downloadAgent'])->name('my-tools.download-agent');
 });
 
 require __DIR__ . '/auth.php';

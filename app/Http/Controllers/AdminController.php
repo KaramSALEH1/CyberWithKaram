@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Lesson;
 use App\Models\Module;
+use App\Models\Course;
+use App\Models\AgentStatus;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -14,7 +17,11 @@ class AdminController extends Controller
     {
         $services = Service::all();
         $lessons = Lesson::orderBy('order_no')->get();
-        return view('dashboard', compact('services', 'lessons'));
+        $pendingPayments = Payment::where('status', 'pending')->count();
+        $coursesCount = Course::count();
+        $onlineAgents = AgentStatus::where('status', 'online')->count();
+
+        return view('dashboard', compact('services', 'lessons', 'pendingPayments', 'coursesCount', 'onlineAgents'));
     }
 
     // إضافة درس كورس جديد

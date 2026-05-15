@@ -24,9 +24,12 @@ class UpdateServiceRequest extends FormRequest
             'logo_url' => ['nullable', 'url', 'max:2048'],
             'description' => ['required', 'string'],
             'full_description' => ['nullable', 'string'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'script_code' => ['nullable', 'string'],
+            'payment_instructions' => ['nullable', 'string'],
             'is_automated' => ['nullable', 'boolean'],
             'is_visible' => ['nullable', 'boolean'],
+            'is_available' => ['nullable', 'boolean'],
         ];
     }
 }

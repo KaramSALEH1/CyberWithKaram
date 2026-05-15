@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 @section('content')
 <div class="py-12 bg-gray-900 min-h-screen text-white">
     <div class="max-w-6xl mx-auto px-6">
@@ -15,7 +15,10 @@
                         <span class="text-xs font-bold text-karam-green uppercase tracking-widest">{{ $course->level }}</span>
                         <h2 class="text-2xl font-black">{{ $course->title }}</h2>
                     </div>
-                    <button onclick="document.getElementById('course_id_input').value='{{ $course->id }}'; document.getElementById('moduleModal').classList.remove('hidden')" class="text-sm bg-gray-600 hover:bg-karam-green px-4 py-2 rounded-md transition">+ Add Module</button>
+                    <div class="flex gap-2">
+                        <a href="{{ route('admin.course.show', $course) }}" class="text-sm bg-blue-900/40 text-blue-300 border border-blue-900 px-4 py-2 rounded-md font-bold">Manage</a>
+                        <button onclick="document.getElementById('course_id_input').value='{{ $course->id }}'; document.getElementById('moduleModal').classList.remove('hidden')" class="text-sm bg-gray-600 hover:bg-karam-green px-4 py-2 rounded-md transition">+ Add Module</button>
+                    </div>
                 </div>
 
                 <div class="p-6 space-y-6">

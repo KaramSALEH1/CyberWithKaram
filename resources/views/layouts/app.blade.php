@@ -31,12 +31,23 @@
                 <span class="text-2xl font-bold tracking-tighter text-karam-green">KARAM</span>
             </a>
             <div class="hidden md:flex space-x-8 items-center text-sm font-medium">
-                <a href="{{ route('home') }}" class="hover:text-karam-green transition">Home</a>
-                <a href="{{ route('about') }}" class="hover:text-karam-green transition">About</a>
-                <a href="{{ route('services') }}" class="hover:text-karam-green transition">Services</a>
-                <a href="{{ route('courses') }}" class="hover:text-karam-green transition">Courses</a>
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Home</a>
+                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">About</a>
+                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Services</a>
+                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Courses</a>
+                
+                @auth
+                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">My Tools</a>
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="hover:text-red-400 transition">Logout</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="hover:text-cyan-400 transition">Login</a>
+                @endauth
+
                 <a href="{{ route('contact') }}"
-                    class="bg-karam-green px-5 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg shadow-karam-green/20">Contact
+                    class="bg-cyan-500 text-black px-5 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
                     Us</a>
             </div>
         </div>

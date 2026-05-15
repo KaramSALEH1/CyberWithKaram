@@ -24,6 +24,14 @@
         <label class="text-xs uppercase text-gray-400">Logo URL</label>
         <input type="url" name="logo_url" value="{{ old('logo_url', $service?->logo_url) }}" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3" placeholder="https://...">
     </div>
+    <div>
+        <label class="text-xs uppercase text-gray-400">Price (USD)</label>
+        <input type="number" step="0.01" min="0" name="price" value="{{ old('price', $service?->price ?? 0) }}" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3">
+    </div>
+    <div class="md:col-span-2">
+        <label class="text-xs uppercase text-gray-400">Payment Instructions (Sham Cash / Banks)</label>
+        <textarea name="payment_instructions" rows="4" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3" placeholder="Sham Cash: 09xxxxxxxx&#10;Bank: Bemo / Commercial Bank...">{{ old('payment_instructions', $service?->payment_instructions) }}</textarea>
+    </div>
     <div class="md:col-span-2">
         <label class="text-xs uppercase text-gray-400">Short Description</label>
         <textarea name="description" rows="3" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3" required>{{ old('description', $service?->description) }}</textarea>
@@ -45,6 +53,11 @@
         <input type="hidden" name="is_automated" value="0">
         <input type="checkbox" name="is_automated" value="1" @checked(old('is_automated', $service?->is_automated ?? false)) class="rounded border-gray-600 bg-gray-900">
         <span class="text-sm text-gray-300">Automated service</span>
+    </label>
+    <label class="inline-flex items-center gap-2">
+        <input type="hidden" name="is_available" value="0">
+        <input type="checkbox" name="is_available" value="1" @checked(old('is_available', $service?->is_available ?? true)) class="rounded border-gray-600 bg-gray-900">
+        <span class="text-sm text-gray-300">Payment currently available</span>
     </label>
 </div>
 

@@ -32,9 +32,12 @@ class ServiceManagementService
             'full_description' => Arr::get($data, 'full_description'),
             'icon' => Arr::get($data, 'icon', '🛡️'),
             'logo_url' => Arr::get($data, 'logo_url'),
+            'price' => Arr::get($data, 'price', 0),
             'script_code' => Arr::get($data, 'script_code'),
+            'payment_instructions' => Arr::get($data, 'payment_instructions'),
             'is_automated' => (bool) Arr::get($data, 'is_automated', false),
             'is_visible' => (bool) Arr::get($data, 'is_visible', false),
+            'is_available' => (bool) Arr::get($data, 'is_available', true),
         ];
     }
 }

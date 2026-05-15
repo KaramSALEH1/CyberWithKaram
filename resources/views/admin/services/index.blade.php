@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Service Control Center')
 
@@ -24,7 +24,7 @@
                         <div class="text-2xl">{{ $service->icon ?: '🛡️' }}</div>
                         <div>
                             <p class="font-bold">{{ $service->title }}</p>
-                            <p class="text-xs text-gray-400">{{ $service->slug }} | {{ $service->category }}</p>
+                            <p class="text-xs text-gray-400">{{ $service->slug }} | {{ $service->category }} | ${{ number_format((float) $service->price, 2) }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">

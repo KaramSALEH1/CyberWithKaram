@@ -14,7 +14,10 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
-        },
+            colors: {
+                'karam-green': '#00f260',
+                'karam-green-dark': '#00cc50',
+            }
     },
 
     plugins: [forms],
