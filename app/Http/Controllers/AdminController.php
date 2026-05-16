@@ -9,6 +9,7 @@ use App\Models\Module;
 use App\Models\Course;
 use App\Models\AgentStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -29,12 +30,9 @@ class AdminController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'youtube_url' => 'required',
+            'video_url' => 'required', // Renamed from youtube_url to match schema
+            'price' => 'nullable|numeric|min:0',
         ]);
-
-        // استخراج الـ ID من رابط يوتيوب
-        parse_str(parse_url($request->youtube_url, PHP_URL_QUERY), $vars);
-        $videoId = $vars['v'] ?? $request->youtube_url;
 
         $moduleId = Module::query()->value('id');
         if (!$moduleId) {
@@ -44,9 +42,13 @@ class AdminController extends Controller
         Lesson::create([
             'module_id' => $moduleId,
             'title' => $request->title,
-            'video_url' => $videoId,
+            'slug' => Str::slug($request->title),
+            'video_type' => 'youtube',
+            'video_url' => $request->video_url,
             'content' => $request->description ?? '',
             'order_no' => Lesson::where('module_id', $moduleId)->count() + 1,
+            'price' => $request->price,
+            'is_free' => false,
         ]);
 
         return back()->with('success', 'Lesson added to your course!');

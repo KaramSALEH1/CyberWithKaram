@@ -27,7 +27,19 @@ def fetch_script(service_id: int, license_key: str):
     try:
         print(f"Fetching script from {FETCH_SCRIPT_ENDPOINT} with params: {params}")
         response = requests.get(FETCH_SCRIPT_ENDPOINT, headers=headers, params=params)
-        response.raise_for_status()  # Raise an exception for HTTP errors (4xx or 5xx)
+        
+        if response.status_code == 403:
+            data = response.json()
+            message = data.get("message", "")
+            if "expired" in message.lower():
+                print(f"\n[!] EXPIRATION WARNING: {message}")
+                print("[!] The agent will now exit. Please renew your subscription to continue.\n")
+                exit(1)
+            else:
+                print(f"Access denied: {message}")
+                return
+
+        response.raise_for_status()
         data = response.json()
 
         script_code = data.get("script_code")

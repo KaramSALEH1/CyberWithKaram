@@ -10,6 +10,8 @@ class Payment extends Model
     protected $fillable = [
         'user_id',
         'service_id',
+        'product_id',
+        'product_type',
         'amount',
         'account_name_number',
         'transaction_amount',
@@ -18,6 +20,7 @@ class Payment extends Model
         'status',
         'license_key',
         'approved_at',
+        'expires_at',
     ];
 
     protected function casts(): array
@@ -25,6 +28,7 @@ class Payment extends Model
         return [
             'amount' => 'decimal:2',
             'approved_at' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
@@ -36,6 +40,11 @@ class Payment extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'product_id');
     }
 
     public function isApproved(): bool

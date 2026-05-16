@@ -62,12 +62,20 @@ class AgentApiController extends Controller
         // Admin overrule for testing purposes
         $isAdminBypass = $user->is_admin && $data['license_key'] === 'ADMIN-TEST-MODE';
 
-        if (!$isAdminBypass && !$verificationService->userHasApprovedAccess(
-            $user->id,
-            (int) $data['service_id'],
-            $data['license_key']
-        )) {
-            return response()->json(['message' => 'Invalid license or payment not approved.'], 403);
+        if (!$isAdminBypass) {
+            $payment = $verificationService->getApprovedPayment(
+                $user->id,
+                (int) $data['service_id'],
+                $data['license_key']
+            );
+
+            if (!$payment) {
+                return response()->json(['message' => 'Invalid license or payment not approved.'], 403);
+            }
+
+            if ($payment->expires_at && $payment->expires_at->isPast()) {
+                return response()->json(['message' => 'License expired. Please renew your subscription.'], 403);
+            }
         }
 
         $service = Service::findOrFail($data['service_id']);

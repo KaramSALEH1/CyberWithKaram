@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lesson extends Model
 {
-    protected $fillable = ['module_id', 'title', 'video_url', 'content', 'order_no', 'requires_purchase'];
+    protected $fillable = ['module_id', 'title', 'slug', 'content', 'video_url', 'video_path', 'video_type', 'order_no', 'price', 'is_free', 'requires_purchase'];
 
     protected function casts(): array
     {
         return [
+            'price' => 'decimal:2',
             'requires_purchase' => 'boolean',
+            'is_free' => 'boolean',
         ];
     }
 

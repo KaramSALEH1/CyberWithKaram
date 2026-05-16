@@ -31,19 +31,27 @@
                         @else
                             @php
                                 $canDownload = $hasApprovedAccess || Auth::user()->is_admin;
-                                $downloadUrl = $canDownload ? route('my-tools.download-agent', ['service_id' => $service->id, 'license_key' => $userLicenseKey ?? 'ADMIN-TEST-MODE']) : null;
+                                $downloadUrl = $canDownload
+                                    ? route('my-tools.download-agent', [
+                                        'service_id' => $service->id,
+                                        'license_key' => $userLicenseKey ?? 'ADMIN-TEST-MODE',
+                                    ])
+                                    : null;
                             @endphp
 
                             @if ($canDownload)
-                                <a href="{{ $downloadUrl }}" class="btn-primary-cyan px-10 py-4 text-lg shadow-[0_0_40px_rgba(0,242,255,0.3)] hover:shadow-[0_0_50px_rgba(0,242,255,0.5)] transform hover:-translate-y-1">
+                                <a href="{{ $downloadUrl }}"
+                                    class="btn-primary-cyan px-10 py-4 text-lg shadow-[0_0_40px_rgba(0,242,255,0.3)] hover:shadow-[0_0_50px_rgba(0,242,255,0.5)] transform hover:-translate-y-1">
                                     Download Agent
                                 </a>
                                 <button @click="openDocs = true"
                                     class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
                                     View Documentation
                                 </button>
-                                @if(Auth::user()->is_admin && !$hasApprovedAccess)
-                                    <p class="w-full text-[10px] font-mono text-yellow-500/50 mt-2 uppercase tracking-widest italic">Admin Overrule Active</p>
+                                @if (Auth::user()->is_admin && !$hasApprovedAccess)
+                                    <p
+                                        class="w-full text-[10px] font-mono text-yellow-500/50 mt-2 uppercase tracking-widest italic">
+                                        Admin Overrule Active</p>
                                 @endif
                             @else
                                 @if ($service->is_available)

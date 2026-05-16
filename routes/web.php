@@ -7,12 +7,13 @@ use App\Http\Controllers\{
     AcademyController,
     AdminController,
     Admin\CommandCenterController,
-    Admin\CourseController,
+    Admin\CourseController as AdminCourseController,
     Admin\PaymentController as AdminPaymentController,
     Admin\ServiceController,
     PaymentController,
     ProfileController,
     UserToolController,
+    CourseController,
 };
 use App\Models\Payment;
 use App\Services\Payment\PaymentVerificationService;
@@ -59,17 +60,29 @@ Route::get('/services/{service:slug}', function (Service $service, PaymentVerifi
 })->name('service.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/services/{service:slug}/pay', [PaymentController::class, 'create'])->name('services.pay');
-    Route::post('/services/{service:slug}/pay', [PaymentController::class, 'store'])->name('services.pay.store');
-    Route::get('/services/{service:slug}/pay/global-success', [PaymentController::class, 'mockGlobalPaymentSuccess'])->name('payment.mock-global-success');
+    // Service Payments
+    Route::get('/services/{slug}/pay', [PaymentController::class, 'showCheckout'])->name('services.pay');
+
+    // Course Payments (Using the exact same logic)
+    Route::get('/courses/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('courses.checkout');
+
+    // Module & Lesson Payments
+    Route::get('/academy/modules/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('modules.checkout');
+    Route::get('/academy/lessons/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('lessons.checkout');
+
+    // Universal Submission Form Route
+    Route::post('/payment/submit', [PaymentController::class, 'storePayment'])->name('payments.submit');
+
+    // Global Payment Mock (For testing)
+    Route::get('/payment/mock-success/{type}/{slug}', [PaymentController::class, 'mockGlobalPaymentSuccess'])->name('payment.mock-global-success');
 });
 
-Route::get('/courses', function () {
-    $courses = Course::with('modules.lessons')->where('is_active', true)->get();
-    return view('courses', compact('courses'));
-})->name('courses');
+Route::get('/courses', [CourseController::class, 'index'])->name('courses');
+Route::get('/courses/{course:slug}', [CourseController::class, 'show'])->name('courses.show');
+Route::get('/courses/{course:slug}/lessons/{lesson:slug}', [CourseController::class, 'showLesson'])->name('lessons.show');
 
 Route::middleware(['auth', 'verified'])->prefix('academy')->group(function () {
+    // Old dynamic API routes (kept for compatibility if needed, but UI will use new routes)
     Route::get('/courses/{course}', function (Course $course, EntitlementService $entitlementService) {
         abort_unless($entitlementService->userHasCourseAccess(request()->user(), $course), 403);
         return response()->json(['course' => $course]);
@@ -99,11 +112,25 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(functio
 
     Route::prefix('academy')->group(function () {
         Route::get('/', [AcademyController::class, 'index'])->name('admin.academy.index');
-        Route::get('/courses/{course}', [CourseController::class, 'show'])->name('admin.course.show');
+
+        // Courses
         Route::post('/course/store', [AcademyController::class, 'storeCourse'])->name('admin.course.store');
-        Route::delete('/course/{id}', [AcademyController::class, 'destroyCourse'])->name('admin.course.delete');
+        Route::get('/course/{course}/edit', [AcademyController::class, 'editCourse'])->name('admin.course.edit');
+        Route::put('/course/{course}', [AcademyController::class, 'updateCourse'])->name('admin.course.update');
+        Route::delete('/course/{course}', [AcademyController::class, 'destroyCourse'])->name('admin.course.delete');
+        Route::get('/courses/{course}', [AdminCourseController::class, 'show'])->name('admin.course.show');
+
+        // Modules
         Route::post('/module/store', [AcademyController::class, 'storeModule'])->name('admin.module.store');
+        Route::get('/module/{module}/edit', [AcademyController::class, 'editModule'])->name('admin.module.edit');
+        Route::put('/module/{module}', [AcademyController::class, 'updateModule'])->name('admin.module.update');
+        Route::delete('/module/{module}', [AcademyController::class, 'destroyModule'])->name('admin.module.delete');
+
+        // Lessons
         Route::post('/lesson/store', [AcademyController::class, 'storeLesson'])->name('admin.lesson.store');
+        Route::get('/lesson/{lesson}/edit', [AcademyController::class, 'editLesson'])->name('admin.lesson.edit');
+        Route::put('/lesson/{lesson}', [AcademyController::class, 'updateLesson'])->name('admin.lesson.update');
+        Route::delete('/lesson/{lesson}', [AcademyController::class, 'destroyLesson'])->name('admin.lesson.delete');
     });
 
     Route::resource('/services', ServiceController::class)->names([

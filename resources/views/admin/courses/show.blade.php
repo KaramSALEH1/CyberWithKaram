@@ -45,12 +45,32 @@
     <div class="space-y-4">
         @foreach($course->modules as $module)
             <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 class="text-lg font-bold text-karam-green mb-3">{{ $module->title }}</h3>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold text-karam-green">{{ $module->title }}</h3>
+                    <div class="flex gap-2">
+                        <a href="{{ route('admin.module.edit', $module) }}" class="text-xs bg-amber-600/20 text-amber-400 border border-amber-600/50 px-3 py-1 rounded-md hover:bg-amber-600/40 transition">Edit</a>
+                        <form action="{{ route('admin.module.delete', $module) }}" method="POST" onsubmit="return confirm('Delete this module and all its lessons?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs bg-red-900/40 text-red-400 border border-red-900 px-3 py-1 rounded-md hover:bg-red-900/60 transition">Delete</button>
+                        </form>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     @forelse($module->lessons as $lesson)
-                        <div class="bg-gray-950 border border-gray-800 rounded-lg p-3 text-sm">
-                            <span class="text-karam-green font-mono text-xs">#{{ $lesson->order_no }}</span>
-                            {{ $lesson->title }}
+                        <div class="bg-gray-950 border border-gray-800 rounded-lg p-3 text-sm flex justify-between items-center group">
+                            <div>
+                                <span class="text-karam-green font-mono text-xs">#{{ $lesson->order_no }}</span>
+                                {{ $lesson->title }}
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                                <a href="{{ route('admin.lesson.edit', $lesson) }}" class="text-[10px] bg-amber-600/20 text-amber-400 border border-amber-600/50 px-2 py-0.5 rounded hover:bg-amber-600/40 transition">Edit</a>
+                                <form action="{{ route('admin.lesson.delete', $lesson) }}" method="POST" onsubmit="return confirm('Delete this lesson?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-[10px] bg-red-900/40 text-red-400 border border-red-900 px-2 py-0.5 rounded hover:bg-red-900/60 transition">Delete</button>
+                                </form>
+                            </div>
                         </div>
                     @empty
                         <p class="text-gray-500 text-sm">No lessons in this module.</p>

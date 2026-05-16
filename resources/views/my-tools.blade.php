@@ -40,19 +40,32 @@
                                     <div class="text-2xl">{{ $payment->service->icon ?? '🛠️' }}</div>
                                 </div>
                                 <div class="bg-cyan-500/5 border border-cyan-500/20 px-3 py-1 rounded-full">
-                                    <span
-                                        class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Active</span>
+                                    @if($payment->expires_at && $payment->expires_at->isPast())
+                                        <span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Expired</span>
+                                    @else
+                                        <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Active</span>
+                                    @endif
                                 </div>
                             </div>
 
                             <h3 class="text-xl font-mono font-bold text-white mb-2">{{ $payment->service->title }}</h3>
                             <div class="space-y-4">
                                 <div>
-                                    <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">License
-                                        Key</p>
-                                    <code
-                                        class="bg-black/50 border border-white/5 p-2 rounded block text-xs text-cyan-500 font-mono break-all">{{ $payment->license_key }}</code>
+                                    <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">License Key</p>
+                                    <code class="bg-black/50 border border-white/5 p-2 rounded block text-xs text-cyan-500 font-mono break-all">{{ $payment->license_key }}</code>
                                 </div>
+
+                                @if($payment->expires_at)
+                                    <div>
+                                        <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">Expires At</p>
+                                        <p class="text-xs font-mono {{ $payment->expires_at->isPast() ? 'text-red-500' : 'text-gray-300' }}">
+                                            {{ $payment->expires_at->format('M d, Y H:i') }}
+                                            @if(!$payment->expires_at->isPast())
+                                                <span class="text-[9px] text-gray-500 ml-1">({{ $payment->expires_at->diffForHumans() }})</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                @endif
 
                                 <a href="{{ route('my-tools.download-agent', ['service_id' => $payment->service->id, 'license_key' => $payment->license_key]) }}"
                                     class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-cyan-500 hover:text-black border border-white/10 rounded-xl font-bold text-sm transition-all">

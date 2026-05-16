@@ -10,34 +10,63 @@ use App\Models\User;
 
 class EntitlementService
 {
+    public function userHasCourseAccess(User $user, Course $course): bool
+    {
+        if ($user->is_admin) {
+            return true;
+        }
+
+        // Check entitlements for the course
+        return $this->hasEntitlement($user, 'course', $course->id);
+    }
+
     public function userHasLessonAccess(User $user, Lesson $lesson): bool
     {
+        if ($user->is_admin) {
+            return true;
+        }
+
+        if ($lesson->is_free) {
+            return true;
+        }
+
+        // Hierarchical Inheritance:
+        // 1. Check Course Access
+        if ($this->userHasCourseAccess($user, $lesson->module->course)) {
+            return true;
+        }
+
+        // 2. Check Module Access
+        if ($this->userHasModuleAccess($user, $lesson->module)) {
+            return true;
+        }
+
+        // 3. Check Specific Lesson Access
+        if ($this->hasEntitlement($user, 'lesson', $lesson->id)) {
+            return true;
+        }
+
+        // If the lesson itself doesn't require purchase, and neither does the module or course
         if (!$lesson->requires_purchase && !$lesson->module->requires_purchase && !$lesson->module->course->requires_purchase) {
             return true;
         }
 
-        return $this->hasEntitlement($user, 'lesson', $lesson->id)
-            || $this->hasEntitlement($user, 'module', $lesson->module_id)
-            || $this->hasEntitlement($user, 'course', $lesson->module->course_id);
+        return false;
     }
 
     public function userHasModuleAccess(User $user, Module $module): bool
     {
-        if (!$module->requires_purchase && !$module->course->requires_purchase) {
+        if ($user->is_admin) {
             return true;
         }
 
-        return $this->hasEntitlement($user, 'module', $module->id)
-            || $this->hasEntitlement($user, 'course', $module->course_id);
-    }
-
-    public function userHasCourseAccess(User $user, Course $course): bool
-    {
-        if (!$course->requires_purchase) {
+        // 1. Check Course Access (Inherited)
+        if ($this->userHasCourseAccess($user, $module->course)) {
             return true;
         }
 
-        return $this->hasEntitlement($user, 'course', $course->id);
+        // 2. Check Specific Module Access
+        return $this->hasEntitlement($user, 'module', $module->id);
     }
 
     private function hasEntitlement(User $user, string $type, int $id): bool

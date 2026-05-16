@@ -9,9 +9,14 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::with(['user', 'service'])->latest()->paginate(20);
+        $payments = Payment::with(['user', 'service', 'course'])
+            ->when($request->status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
+            ->latest()
+            ->paginate(20);
 
         return view('admin.payments.index', compact('payments'));
     }

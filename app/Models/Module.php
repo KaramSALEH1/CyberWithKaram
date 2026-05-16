@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Module extends Model
 {
-    protected $fillable = ['course_id', 'title', 'order_no', 'requires_purchase'];
+    protected $fillable = ['course_id', 'title', 'order_no', 'price', 'requires_purchase'];
 
     protected function casts(): array
     {
         return [
+            'price' => 'decimal:2',
             'requires_purchase' => 'boolean',
         ];
     }
