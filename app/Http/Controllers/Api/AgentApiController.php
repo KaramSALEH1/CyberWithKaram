@@ -8,7 +8,7 @@ use App\Http\Requests\Api\FetchScriptRequest;
 use App\Models\AgentStatus;
 use App\Models\Service;
 use App\Services\Payment\PaymentVerificationService;
-use App\Services\Telegram\TelegramService; // <--- Add this
+use App\Services\Telegram\TelegramService;
 use Illuminate\Http\Request;
 
 class AgentApiController extends Controller
@@ -18,12 +18,16 @@ class AgentApiController extends Controller
     {
     }
 
-    public function heartbeat(AgentHeartbeatApiRequest $request)
+    public function heartbeat(AgentHeartbeatApiRequest $request, PaymentVerificationService $verificationService)
     {
         $user = $request->user();
         $data = $request->validated();
 
-        $service = Service::findOrFail($data['service_id']); // Fetch the service
+        if (! $user->is_admin && ! $verificationService->userHasApprovedAccess($user->id, (int) $data['service_id'])) {
+            return response()->json(['message' => 'No approved license for this service.'], 403);
+        }
+
+        $service = Service::findOrFail($data['service_id']);
 
         $agentStatus = AgentStatus::firstOrNew( // <--- Use firstOrNew
             [

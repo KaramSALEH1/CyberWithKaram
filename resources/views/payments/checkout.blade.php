@@ -3,7 +3,20 @@
 @section('title', 'Pay for ' . $product->title)
 
 @section('content')
-    <section class="py-16 px-6 max-w-3xl mx-auto" x-data="{ paymentMethod: 'local' }">
+    <section class="py-16 px-6 max-w-3xl mx-auto" x-data="{
+        paymentMethod: 'local',
+        copyToClipboard(event, elementId) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = event.target.innerText;
+                event.target.innerText = 'Copied!';
+                setTimeout(() => { event.target.innerText = originalText; }, 2000);
+            });
+        },
+        mockGlobalPaymentSuccess() {
+            window.location.href = '{{ route('payment.mock-global-success', ['type' => $product_type, 'slug' => $mockSlug]) }}';
+        }
+    }">
         <div class="bg-[#0a0a0a] border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] rounded-2xl p-8">
             <h1 class="text-3xl font-black mb-2 text-white">{{ $product->title }}</h1>
             <p class="text-cyan-400 text-2xl font-bold mb-6">{{ number_format((float) $product->price, 0) }} SYP</p>
@@ -29,8 +42,9 @@
                     @if ($product_type == 'service')
                         <p class="text-sm text-gray-300 mt-1">Your license key:</p>
                         <p class="font-mono text-lg mt-2 text-cyan-300">{{ $approvedPayment->license_key }}</p>
-                        <p class="text-xs text-gray-400 mt-3">Use this key with your Python Agent and Sanctum API token to
-                            fetch the script.</p>
+                        <p class="text-xs text-gray-400 mt-3">Deploy your agent instantly:</p>
+                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-3 rounded-lg text-[10px] text-green-400 font-mono break-all">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent.py && python3 agent.py</code>
+                        <a href="{{ route('my-tools.index') }}" class="inline-block mt-4 text-cyan-400 text-sm hover:underline">View full deployment commands →</a>
                     @else
                         <p class="text-sm text-gray-300 mt-1">
                             @if($product_type == 'course')
@@ -41,17 +55,22 @@
                                 You now have full access to this lesson.
                             @endif
                         </p>
-                        @php
-                            $redirectUrl = route('courses.show', $product->slug ?? ($product->course->slug ?? $product->module->course->slug));
-                        @endphp
-                        <a href="{{ $redirectUrl }}"
-                            class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
-                            @if($product_type == 'lesson')
+                        @if ($product_type === 'lesson')
+                            <a href="{{ route('lessons.show', [$product->module->course->slug, $product->slug]) }}"
+                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Go to Lesson
-                            @else
+                            </a>
+                        @elseif ($product_type === 'course')
+                            <a href="{{ route('courses.show', $product->slug) }}"
+                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Start Learning
-                            @endif
-                        </a>
+                            </a>
+                        @elseif ($product_type === 'module')
+                            <a href="{{ route('courses.show', $product->course->slug) }}"
+                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                Start Learning
+                            </a>
+                        @endif
                     @endif
                 </div>
             @elseif($pendingPayment)
@@ -273,45 +292,17 @@
     </section>
 
     @push('scripts')
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         <script>
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('paymentPage', () => ({
-                    paymentMethod: 'local',
-                    copyToClipboard(event, elementId) {
-                        const textToCopy = document.getElementById(elementId).innerText;
-                        navigator.clipboard.writeText(textToCopy).then(() => {
-                            const originalText = event.target.innerText;
-                            event.target.innerText = 'Copied!';
-                            setTimeout(() => {
-                                event.target.innerText = originalText;
-                            }, 2000);
-                        }).catch(err => {
-                            console.error('Failed to copy: ', err);
-                        });
-                    },
-                    mockGlobalPaymentSuccess() {
-                        alert('Simulating global payment success! Redirecting...');
-                        window.location.href =
-                            '{{ route('payment.mock-global-success', ['type' => $product_type, 'slug' => $product->slug]) }}';
-                    }
-                }))
-            });
-
             document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.copy-instructions-btn').forEach(button => {
                     button.addEventListener('click', function() {
-                        const instructionsBlock = this.previousElementSibling;
+                        const instructionsBlock = this.closest('.relative')?.querySelector('.whitespace-pre-line');
+                        if (!instructionsBlock) return;
                         const textToCopy = instructionsBlock.innerText.trim();
-
                         navigator.clipboard.writeText(textToCopy).then(() => {
                             const originalText = this.innerText;
                             this.innerText = 'Copied!';
-                            setTimeout(() => {
-                                this.innerText = originalText;
-                            }, 2000);
-                        }).catch(err => {
-                            console.error('Failed to copy payment instructions: ', err);
+                            setTimeout(() => { this.innerText = originalText; }, 2000);
                         });
                     });
                 });

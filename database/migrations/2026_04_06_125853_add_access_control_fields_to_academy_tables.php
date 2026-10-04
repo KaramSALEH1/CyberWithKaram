@@ -20,7 +20,9 @@ return new class extends Migration
         });
 
         Schema::table('lessons', function (Blueprint $table) {
-            $table->boolean('requires_purchase')->default(false)->after('order_no');
+            if (! Schema::hasColumn('lessons', 'requires_purchase')) {
+                $table->boolean('requires_purchase')->default(false)->after('order_no');
+            }
         });
     }
 

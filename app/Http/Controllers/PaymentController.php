@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Payment\StorePaymentDetailsRequest;
+use App\Models\Course;
+use App\Models\Lesson;
+use App\Models\Module;
 use App\Models\Payment;
 use App\Models\Service;
+use App\Services\Payment\PaymentVerificationService;
 use App\Services\Telegram\TelegramService;
-use Illuminate\Support\Str;
-
-use App\Models\Course;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -25,11 +28,11 @@ class PaymentController extends Controller
             $product_type = 'course';
             $productIdField = 'product_id';
         } elseif ($request->routeIs('modules.checkout')) {
-            $product = Module::where('id', $slug)->firstOrFail(); // Using ID for modules if slug is missing
+            $product = Module::where('id', $slug)->with('course')->firstOrFail();
             $product_type = 'module';
             $productIdField = 'product_id';
         } elseif ($request->routeIs('lessons.checkout')) {
-            $product = Lesson::where('slug', $slug)->firstOrFail();
+            $product = Lesson::where('slug', $slug)->with('module.course')->firstOrFail();
             $product_type = 'lesson';
             $productIdField = 'product_id';
         } else {
@@ -63,109 +66,101 @@ class PaymentController extends Controller
             }
         }
 
-        return view('payments.checkout', compact('product', 'product_type', 'approvedPayment', 'pendingPayment'));
+        $mockSlug = $this->resolveCheckoutSlug($product_type, $product);
+
+        return view('payments.checkout', compact('product', 'product_type', 'approvedPayment', 'pendingPayment', 'mockSlug'));
     }
 
     public function storePayment(StorePaymentDetailsRequest $request, TelegramService $telegramService)
     {
         $product_type = $request->input('product_type');
-        $product_id = $request->input('product_id');
+        $product_id = (int) $request->input('product_id');
 
-        $product = null;
-        $productIdField = 'product_id';
+        $product = match ($product_type) {
+            'course' => Course::findOrFail($product_id),
+            'module' => Module::findOrFail($product_id),
+            'lesson' => Lesson::findOrFail($product_id),
+            default => Service::findOrFail($product_id),
+        };
 
-        if ($product_type === 'course') {
-            $product = Course::findOrFail($product_id);
-        } elseif ($product_type === 'module') {
-            $product = Module::findOrFail($product_id);
-        } elseif ($product_type === 'lesson') {
-            $product = Lesson::findOrFail($product_id);
-        } else {
-            $product = Service::findOrFail($product_id);
-            $productIdField = 'service_id';
+        $expectedAmount = (float) $product->price;
+        $submittedAmount = (float) $request->input('transaction_amount');
+
+        if (abs($submittedAmount - $expectedAmount) > 0.01) {
+            throw ValidationException::withMessages([
+                'transaction_amount' => 'Transaction amount must match the product price (' . number_format($expectedAmount, 0) . ' SYP).',
+            ]);
         }
 
         $data = $request->validated();
 
         $paymentData = [
             'user_id' => $request->user()->id,
-            'amount' => $product->price,
+            'amount' => $expectedAmount,
             'product_type' => $product_type,
             'account_name_number' => $data['account_name_number'],
-            'transaction_amount' => $data['transaction_amount'],
+            'transaction_amount' => $expectedAmount,
             'transaction_id_reference' => $data['transaction_id_reference'],
             'notes' => $data['notes'] ?? null,
             'status' => 'pending',
         ];
 
-        // Explicitly handle product_id vs service_id mapping
         if ($product_type === 'service') {
             $paymentData['service_id'] = $product->id;
             $paymentData['product_id'] = null;
         } else {
             $paymentData['product_id'] = $product->id;
-            $paymentData['service_id'] = null; // Explicitly bypass legacy requirement
+            $paymentData['service_id'] = null;
         }
 
-        $payment = Payment::create($paymentData);
+        Payment::create($paymentData);
 
-        // Send Telegram alert
         $message = implode("\n", [
             '🚨 <b>New Payment Request</b>',
             'User: ' . e($request->user()->name),
             'Product (' . ucfirst($product_type) . '): ' . e($product->title),
             'From Account: ' . e($data['account_name_number']),
-            'Amount: ' . number_format((float) $data['transaction_amount'], 2) . ' SYP',
+            'Amount: ' . number_format($expectedAmount, 2) . ' SYP',
             'Ref ID: ' . e($data['transaction_id_reference']),
             'Check Admin Panel to Approve.',
         ]);
         $telegramService->sendMessage($message);
 
-        $route = 'services.pay';
-        $slug = $product->slug ?? $product->id;
-
-        if ($product_type === 'course') $route = 'courses.checkout';
-        elseif ($product_type === 'module') $route = 'modules.checkout';
-        elseif ($product_type === 'lesson') $route = 'lessons.checkout';
+        $route = match ($product_type) {
+            'course' => 'courses.checkout',
+            'module' => 'modules.checkout',
+            'lesson' => 'lessons.checkout',
+            default => 'services.pay',
+        };
 
         return redirect()
-            ->route($route, $slug)
+            ->route($route, $this->resolveCheckoutSlug($product_type, $product))
             ->with('success', 'Payment details submitted successfully. Awaiting admin verification.');
     }
 
-    public function mockGlobalPaymentSuccess($type, $slug)
+    public function mockGlobalPaymentSuccess($type, $slug, PaymentVerificationService $verificationService)
     {
         if (! Auth::check()) {
             return redirect()->route('login')->with('error', 'Please login to complete the purchase.');
         }
 
-        $product = null;
-        $productIdField = 'product_id';
+        $product = match ($type) {
+            'course' => Course::where('slug', $slug)->firstOrFail(),
+            'module' => Module::where('id', $slug)->with('course')->firstOrFail(),
+            'lesson' => Lesson::where('slug', $slug)->with('module.course')->firstOrFail(),
+            default => Service::where('slug', $slug)->firstOrFail(),
+        };
 
-        if ($type === 'course') {
-            $product = Course::where('slug', $slug)->firstOrFail();
-        } elseif ($type === 'module') {
-            $product = Module::where('id', $slug)->firstOrFail();
-        } elseif ($type === 'lesson') {
-            $product = Lesson::where('slug', $slug)->firstOrFail();
-        } else {
-            $product = Service::where('slug', $slug)->firstOrFail();
-            $productIdField = 'service_id';
-        }
-
-        // Simulate successful global payment
         $paymentData = [
-            'user_id' => Auth::user()->id,
+            'user_id' => Auth::id(),
             'amount' => $product->price,
             'product_type' => $type,
-            'status' => 'approved',
-            'license_key' => Str::random(32),
-            'payment_method' => 'global_mock',
-            'approved_at' => now(),
-            'expires_at' => now()->addDays(30),
+            'status' => 'pending',
+            'account_name_number' => 'GLOBAL_MOCK',
+            'transaction_amount' => $product->price,
+            'transaction_id_reference' => 'MOCK-' . Str::upper(Str::random(8)),
         ];
 
-        // Explicitly handle product_id vs service_id mapping
         if ($type === 'service') {
             $paymentData['service_id'] = $product->id;
             $paymentData['product_id'] = null;
@@ -175,34 +170,31 @@ class PaymentController extends Controller
         }
 
         $payment = Payment::create($paymentData);
-
-        // Create entitlement if applicable
-        if (in_array($type, ['course', 'module', 'lesson'])) {
-            \App\Models\Entitlement::updateOrCreate(
-                [
-                    'user_id' => Auth::id(),
-                    'entitlement_type' => $type,
-                    'entitlement_id' => $product->id,
-                ],
-                [
-                    'is_active' => true,
-                    'starts_at' => now(),
-                    'ends_at' => now()->addDays(30),
-                ]
-            );
-        }
+        $verificationService->approve($payment, Auth::user());
 
         if ($type === 'service') {
             return redirect()->route('service.show', $product->slug)
                 ->with('success', 'Payment successful! Your service is now active.');
-        } elseif ($type === 'course') {
+        }
+
+        if ($type === 'course') {
             return redirect()->route('courses.show', $product->slug)
                 ->with('success', 'Payment successful! Your academy access is now active.');
-        } else {
-            // For modules/lessons, redirect back to course page
-            $courseSlug = ($type === 'module') ? $product->course->slug : $product->module->course->slug;
-            return redirect()->route('courses.show', $courseSlug)
-                ->with('success', "Payment successful! Your " . ucfirst($type) . " access is now active.");
         }
+
+        $courseSlug = $type === 'module'
+            ? $product->course->slug
+            : $product->module->course->slug;
+
+        return redirect()->route('courses.show', $courseSlug)
+            ->with('success', 'Payment successful! Your ' . ucfirst($type) . ' access is now active.');
+    }
+
+    private function resolveCheckoutSlug(string $productType, object $product): string|int
+    {
+        return match ($productType) {
+            'module' => $product->id,
+            default => $product->slug,
+        };
     }
 }

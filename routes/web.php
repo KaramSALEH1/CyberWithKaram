@@ -42,9 +42,9 @@ Route::get('/services/{service:slug}', function (Service $service, PaymentVerifi
     $userLicenseKey = null; // To store the license key if purchased and approved
 
     if (Auth::check()) {
-        // Check if the user has an approved payment for this service
         $approvedPayment = Payment::query()
             ->where('user_id', Auth::id())
+            ->where('product_type', 'service')
             ->where('service_id', $service->id)
             ->where('status', 'approved')
             ->latest()
@@ -67,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/courses/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('courses.checkout');
 
     // Module & Lesson Payments
-    Route::get('/academy/modules/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('modules.checkout');
+    Route::get('/academy/modules/{id}/checkout', [PaymentController::class, 'showCheckout'])->name('modules.checkout');
     Route::get('/academy/lessons/{slug}/checkout', [PaymentController::class, 'showCheckout'])->name('lessons.checkout');
 
     // Universal Submission Form Route
@@ -142,8 +142,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(functio
         'update' => 'admin.services.update',
         'destroy' => 'admin.services.destroy',
     ]);
-
-    Route::post('/lessons/store', [AdminController::class, 'storeLesson'])->name('admin.dashboard.lesson.store');
 });
 
 Route::middleware(['auth'])->group(function () {

@@ -30,8 +30,7 @@ class PaymentVerificationService
 
         $payment->update($paymentData);
 
-        // Create entitlement based on product type
-        if (in_array($payment->product_type, ['course', 'module', 'lesson'])) {
+        if (in_array($payment->product_type, ['course', 'module', 'lesson'], true)) {
             \App\Models\Entitlement::updateOrCreate(
                 [
                     'user_id' => $payment->user_id,
@@ -39,6 +38,7 @@ class PaymentVerificationService
                     'entitlement_id' => $payment->product_id,
                 ],
                 [
+                    'purchase_id' => $payment->id,
                     'is_active' => true,
                     'starts_at' => now(),
                     'ends_at' => now()->addDays(30),
@@ -81,7 +81,7 @@ class PaymentVerificationService
 
         $this->actionLogService->log(
             $admin,
-            "Rejected payment #{$payment->id} for user #{$payment->user_id} on service #{$payment->service_id}."
+            "Rejected payment #{$payment->id} for user #{$payment->user_id} on {$payment->product_type} #" . ($payment->product_id ?? $payment->service_id) . '.'
         );
 
         return $payment->refresh();

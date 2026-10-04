@@ -15,13 +15,7 @@
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
-                                <p class="font-bold text-lg">
-                                    @if ($payment->product_type === 'course')
-                                        {{ $payment->course?->title ?? 'Deleted Course' }}
-                                    @else
-                                        {{ $payment->service?->title ?? 'Deleted Service' }}
-                                    @endif
-                                </p>
+                                <p class="font-bold text-lg">{{ $payment->productTitle() }}</p>
                                 <span
                                     class="text-[10px] font-black uppercase px-2 py-0.5 rounded {{ $payment->product_type === 'course' ? 'bg-blue-900/30 text-blue-400 border border-blue-800' : 'bg-gray-800 text-gray-400 border border-gray-700' }}">
                                     {{ $payment->product_type }}

@@ -8,7 +8,8 @@ class AgentRegisterRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null
+            && (int) $this->input('user_id') === $this->user()->id;
     }
 
     public function rules(): array

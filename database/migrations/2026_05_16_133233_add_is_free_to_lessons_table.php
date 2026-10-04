@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('lessons', function (Blueprint $table) {
-            $table->boolean('is_free')->default(false);
-            $table->string('slug')->nullable();
+            if (! Schema::hasColumn('lessons', 'is_free')) {
+                $table->boolean('is_free')->default(false);
+            }
+            if (! Schema::hasColumn('lessons', 'slug')) {
+                $table->string('slug')->nullable();
+            }
         });
     }
 
@@ -23,7 +27,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('lessons', function (Blueprint $table) {
-            $table->dropColumn(['is_free', 'slug']);
+            $columns = array_filter(
+                ['is_free', 'slug'],
+                fn (string $col) => Schema::hasColumn('lessons', $col)
+            );
+            if ($columns !== []) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };

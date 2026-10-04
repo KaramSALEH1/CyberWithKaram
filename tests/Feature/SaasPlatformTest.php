@@ -59,8 +59,12 @@ class SaasPlatformTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('services.pay.store', $service), [
-                'receipt' => UploadedFile::fake()->create('receipt.jpg', 100, 'image/jpeg'),
+            ->post(route('payments.submit'), [
+                'product_type' => 'service',
+                'product_id' => $service->id,
+                'account_name_number' => 'Test Account',
+                'transaction_amount' => 30,
+                'transaction_id_reference' => 'TXN-TEST-001',
             ])
             ->assertRedirect();
 

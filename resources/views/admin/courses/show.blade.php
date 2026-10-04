@@ -26,12 +26,22 @@
         </form>
 
         @foreach($course->modules as $module)
-            <form action="{{ route('admin.lesson.store') }}" method="POST" class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+            <form action="{{ route('admin.lesson.store') }}" method="POST" enctype="multipart/form-data"
+                class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3" x-data="{ videoType: 'youtube' }">
                 @csrf
                 <input type="hidden" name="module_id" value="{{ $module->id }}">
                 <h2 class="font-bold text-yellow-500">Add Lesson to: {{ $module->title }}</h2>
                 <input type="text" name="title" placeholder="Lesson title" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3" required>
-                <input type="text" name="video_url" placeholder="YouTube video ID" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3" required>
+                <select name="video_type" x-model="videoType" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3">
+                    <option value="youtube">YouTube</option>
+                    <option value="local">Local MP4</option>
+                </select>
+                <div x-show="videoType === 'youtube'">
+                    <input type="text" name="video_url" placeholder="YouTube video ID" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3">
+                </div>
+                <div x-show="videoType === 'local'">
+                    <input type="file" name="video_file" accept="video/mp4,video/quicktime,video/x-msvideo" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm">
+                </div>
                 <textarea name="content" rows="3" placeholder="Lesson content" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3"></textarea>
                 <label class="flex items-center gap-2 text-sm text-gray-300">
                     <input type="checkbox" name="requires_purchase" value="1" class="rounded border-gray-600 bg-gray-900">
@@ -81,5 +91,3 @@
     </div>
 </div>
 @endsection
-
-

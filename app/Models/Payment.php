@@ -51,4 +51,15 @@ class Payment extends Model
     {
         return $this->status === 'approved';
     }
+
+    public function productTitle(): string
+    {
+        return match ($this->product_type) {
+            'service' => $this->service?->title ?? 'Deleted Service',
+            'course' => $this->course?->title ?? 'Deleted Course',
+            'module' => \App\Models\Module::find($this->product_id)?->title ?? 'Deleted Module',
+            'lesson' => \App\Models\Lesson::find($this->product_id)?->title ?? 'Deleted Lesson',
+            default => 'Unknown Product',
+        };
+    }
 }

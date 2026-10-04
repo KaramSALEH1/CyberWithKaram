@@ -1,0 +1,441 @@
+# CyberWithKaram — Complete Project Description
+
+> **Purpose of this document:** A single, self-contained description of the entire project, detailed enough for a human to read or for an AI agent to understand the whole codebase **without needing to scan the source files**.
+>
+> **Repository:** `https://github.com/KaramSALEH1/CyberWithKaram.git` · **Branch:** `main` · **Latest commit:** `8fc0e27` ("PROJECT COMPLETE, 1st")
+> **Working tree:** `c:\Users\Karam\Documents\CyberWithKaram`
+
+---
+
+## 1. What This Project Is
+
+**CyberWithKaram** is a **cybersecurity-services SaaS platform** built with **Laravel 12 (PHP 8.2+)**. It sells three product lines from one website:
+
+1. **Security Services marketplace** — VAPT, SOC, Cloud, and Consultation services (e.g. "Web App Pentesting", "SIEM Deployment", "Kubernetes Security").
+2. **"Academy"** — a course platform (Courses → Modules → Lessons) with video content (YouTube or self-hosted uploads) and per-course/module/lesson paid access.
+3. **Remote Agent / Command Center** — a fleet-management system for Python "agents" running on client machines. Admins queue signed commands; agents poll for them and return results. The platform also pushes executable Python `script_code` to licensed agents.
+
+**Monetization model:** **Manual payment verification** — the customer submits a bank/wallet transfer receipt (account name, transaction amount, reference ID) in a checkout form; an admin reviews it in the dashboard and approves/rejects it. On approval the platform issues a **license key** (`CWK-` + 16 random uppercase chars) for services, or creates an **Entitlement** for academy content. Access lasts **30 days** (`expires_at`). Currency: **SYP (Syrian Pounds)**.
+
+**Notifications:** **Telegram bot** alerts (HTML messages) for: new payment receipts uploaded, payment approved (with license key), and agents going offline. Admin actions are also written to an `action_logs` audit table.
+
+---
+
+## 2. Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Laravel 12 (`laravel/framework ^12.0`), PHP `^8.2` |
+| Auth (web) | Laravel Breeze (`^2.4`, dev dep) — Blade + Alpine.js session auth, email verification |
+| Auth (API) | Laravel Sanctum (`^4.3`) — personal access tokens for Python agents |
+| Database | **SQLite** (`database/database.sqlite`); sessions/cache/queues on `database` driver |
+| Frontend | Blade, **Tailwind CSS 3** (`@tailwindcss/forms`, custom `karam-green: #00f260`, Figtree font), **Alpine.js 3**, **Vite 7** (`laravel-vite-plugin`), Axios |
+| Queue | `database` queue driver; workers via `php artisan queue:listen` |
+| Tests | PHPUnit `^11.5.50` (in-memory SQLite, `QUEUE_CONNECTION=sync`) |
+| Python agent | Standalone scripts depending only on `requests` |
+| Other | Laravel Pint, Pail, Sail, Tinker, Faker, Mockery, Collision, `concurrently` |
+| Notifications | Telegram Bot API via `Http` facade (`config/telegram.php` ← `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) |
+
+**Composer scripts:**
+- `composer setup` — install, copy `.env`, `key:generate`, `migrate --force`, `npm install`, `npm run build`
+- `composer dev` — concurrently: `php artisan serve` + `queue:listen` + `pail` + `npm run dev`
+- `composer test` — `config:clear` + `php artisan test`
+
+**Environment (`.env`):** `APP_URL=http://localhost`, `DB_CONNECTION=sqlite`, `SESSION_DRIVER=database`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `MAIL_MAILER=log`, Telegram vars configured.
+
+**Health endpoint:** `/up` (registered in `bootstrap/app.php`).
+
+---
+
+## 3. Directory Structure (project-owned code)
+
+```
+CyberWithKaram/
+├── agent.py                        # Standalone Python agent (legacy/demo client)
+├── artisan
+├── bootstrap/app.php               # Routing, middleware aliases, CSRF exceptions
+├── composer.json / composer.lock
+├── package.json / vite.config.js / tailwind.config.js / postcss.config.js
+├── phpunit.xml
+├── .cursorrules                    # AI-coding rules for this project
+├── .env / .env.example
+├── config/
+│   ├── app, auth, cache, database, filesystems, logging, mail,
+│   │   queue, sanctum, services (standard Laravel)
+│   └── telegram.php                # bot_token + chat_id from env
+├── app/
+│   ├── Console/Commands/CheckOfflineAgents.php
+│   ├── Http/Controllers/
+│   │   ├── AcademyController.php           # Admin CRUD courses/modules/lessons
+│   │   ├── AdminController.php             # Admin dashboard stats
+│   │   ├── CourseController.php            # Public course/lesson pages
+│   │   ├── PageController.php
+│   │   ├── PaymentController.php           # Checkout + receipt submission + mock pay
+│   │   ├── ProfileController.php
+│   │   ├── UserToolController.php          # "My Tools": token + agent download
+│   │   ├── Admin/{CommandCenter,Course,Payment,Service}Controller.php
+│   │   ├── Api/{AgentApiController, AgentController}.php
+│   │   └── Auth/*                          # Breeze auth controllers (9 files)
+│   ├── Http/Middleware/{AuthenticateAgent, EnsureAdmin}.php
+│   ├── Http/Requests/                      # FormRequests (see §8)
+│   ├── Jobs/{DispatchAgentCommandJob, ProcessAgentResultJob}.php
+│   ├── Models/                             # 14 models (see §5)
+│   ├── Policies/{AgentCommandPolicy, CoursePolicy, LessonPolicy, ModulePolicy}.php
+│   ├── Providers/AppServiceProvider.php    # empty stub
+│   ├── Services/
+│   │   ├── Academy/EntitlementService.php
+│   │   ├── ActionLog/ActionLogService.php
+│   │   ├── Agent/AgentProtocolService.php
+│   │   ├── CommandCenter/{CommandDispatchService, CommandSigningService}.php
+│   │   ├── Payment/PaymentVerificationService.php
+│   │   ├── Service/ServiceManagementService.php
+│   │   └── Telegram/TelegramService.php
+│   ├── Support/SecureVideoUpload.php
+│   └── View/Components/{AppLayout, GuestLayout}.php
+├── database/
+│   ├── database.sqlite
+│   ├── factories/UserFactory.php
+│   ├── migrations/   # 38 migrations (see §6)
+│   └── seeders/DatabaseSeeder.php          # 10 demo security services
+├── public/           # standard Laravel public dir (index.php, favicon, robots)
+├── resources/
+│   ├── css/app.css, js/app.js, js/bootstrap.js
+│   └── views/        # 57 Blade files (see §9)
+├── routes/{web.php, api.php, auth.php, console.php}
+├── storage/          # logs, cache, sessions, views, videos (public disk)
+├── tests/            # 12 test files (see §10)
+└── vendor/           # Composer dependencies (ignore)
+```
+
+> ⚠️ `README.md` is still the **default Laravel README** (with a UTF-16 `# CyberWithKaram` heading appended) — this file replaces it as real documentation.
+> ⚠️ Working tree has **uncommitted modifications** (24 modified files + untracked `app/Support/`) on top of commit `8fc0e27`.
+
+
+---
+
+## 4. Routes
+
+### 4.1 Web (`routes/web.php`)
+
+**Public:**
+| Method | URI | Name | Notes |
+|---|---|---|---|
+| GET | `/` | `home` | Landing page; shows visible services (guards with `Schema::hasTable`) |
+| GET | `/about` | `about` | Static |
+| GET | `/contact` | `contact` | Static |
+| GET | `/services` | `services` | Lists `is_visible` services |
+| GET | `/services/{service:slug}` | `service.show` | Details; computes `hasApprovedAccess` + `userLicenseKey` for logged-in user |
+| GET | `/courses` | `courses` | Active courses |
+| GET | `/courses/{course:slug}` | `courses.show` | Curriculum; `hasCourseAccess` flag |
+| GET | `/courses/{course:slug}/lessons/{lesson:slug}` | `lessons.show` | Lesson player w/ prev/next; free-lesson or entitlement gate |
+
+**Authenticated + verified (`auth`,`verified`):**
+| Method | URI | Name |
+|---|---|---|
+| GET | `/services/{slug}/pay` | `services.pay` |
+| GET | `/courses/{slug}/checkout` | `courses.checkout` |
+| GET | `/academy/modules/{id}/checkout` | `modules.checkout` |
+| GET | `/academy/lessons/{slug}/checkout` | `lessons.checkout` |
+| POST | `/payment/submit` | `payments.submit` (receipt upload) |
+| GET | `/payment/mock-success/{type}/{slug}` | `payment.mock-global-success` (dev shortcut that instantly approves) |
+
+**Academy JSON gates** (prefix `/academy`, `auth`+`verified`): `academy.course.show`, `academy.module.show`, `academy.lesson.show` — return JSON or **403** based on `EntitlementService`.
+
+**Admin** (prefix `/admin`, middleware `auth`,`verified`,`admin`):
+- `GET /admin/dashboard` → `admin.dashboard` (uses `AdminController@index` → `dashboard` view)
+- **Command Center:** `GET /admin/command-center` (`admin.command-center.index`), `POST .../commands` (store), `POST .../commands/{command}/cancel` (cancel)
+- **Payments:** `GET /admin/payments` (list, filter `?status=`), `GET /admin/payments/{payment}`, `POST .../approve`, `POST .../reject`
+- **Academy** (prefix `/admin/academy`): course/module/lesson `store`, `{id}/edit`, `PUT`, `DELETE`; `GET /admin/academy/courses/{course}` → `admin.course.show`
+- **Services:** full `Route::resource` (`admin.services.*`)
+
+**Authenticated only (`auth`):**
+- `GET/PATCH/DELETE /profile` (`profile.*`)
+- `GET /my-tools` → `my-tools.index` (**deletes old `agent-api` Sanctum tokens and issues a fresh one on every visit**)
+- `GET /my-tools/download-agent/{service_id}/{license_key}` → streams a generated `agent_bootstrapper.py`
+
+`routes/auth.php` = standard Breeze auth routes (register, login, password reset, email verification, confirm password, logout).
+
+### 4.2 API (`routes/api.php`) — CSRF-exempt (`api/*` excluded in `bootstrap/app.php`)
+
+**Legacy/token API** (`auth:sanctum` + `throttle:api`):
+| Method | URI | Controller | Purpose |
+|---|---|---|---|
+| POST | `/api/heartbeat` | `AgentApiController@heartbeat` | Python agent heartbeat (requires approved license) |
+| GET | `/api/fetch-script?service_id&license_key` | `AgentApiController@fetchScript` | Returns `service.script_code` if license valid/non-expired |
+| POST | `/api/agent/token` | `AgentApiController@createToken` | Creates a `python-agent` Sanctum token |
+
+**v1 Agent protocol** (`throttle:api`; legacy alias at `/api/v1/agent/*`):
+| Method | URI | Middleware | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/agents/register` | `auth:sanctum` | Register agent → returns one-time `api_token` |
+| POST | `/api/v1/agents/heartbeat` | `agent.auth` | Update agent presence + heartbeat record |
+| POST | `/api/v1/agents/poll` | `agent.auth` | Next queued, unexpired command |
+| POST | `/api/v1/agents/result` | `agent.auth` | Submit command result (replay-protected) |
+
+### 4.3 Console (`routes/console.php`)
+- `inspire` command.
+- **Schedule:** `agents:check-offline` **every 5 minutes**.
+
+### 4.4 Middleware aliases (`bootstrap/app.php`)
+- `agent.auth` → `App\Http\Middleware\AuthenticateAgent`
+- `admin` → `App\Http\Middleware\EnsureAdmin`
+
+---
+
+## 5. Data Model (14 Eloquent Models)
+
+| Model | Key fields / notes |
+|---|---|
+| **User** | `name, email, password, is_admin(bool)`; traits `HasApiTokens, HasFactory, Notifiable`; relations: `agents, purchases, entitlements, payments, agentStatuses, actionLogs` |
+| **Service** | `title, slug(unique, route key), category, description, full_description (HTML allow-list sanitized via mutator), icon, logo_url, price(decimal), is_automated, is_visible, is_available, payment_instructions, script_code (longText)`; `requiresPayment()`; relations `payments`, `agentStatuses` |
+| **Payment** | `user_id, service_id (nullable), product_id (nullable), product_type ∈ {service,course,module,lesson}, amount, account_name_number, transaction_amount, transaction_id_reference, notes, status ∈ {pending,approved,rejected}, license_key, approved_at, expires_at`; `productTitle()` resolves product by type; `isApproved()` |
+| **Purchase** | legacy purchase record (referenced by Entitlement) |
+| **Entitlement** | `user_id, purchase_id, entitlement_type, entitlement_id, is_active, starts_at, ends_at` — grants academy access |
+| **Course** | `title, slug, description, level, price, is_active, requires_purchase`; `modules()` (ordered by order_no), `lessons()` (hasManyThrough Module) |
+| **Module** | `course_id, title, order_no, price, requires_purchase`; `course()`, `lessons()` |
+| **Lesson** | `module_id, title, slug, content, video_url, video_path, video_type ∈ {youtube,local}, order_no, price, is_free, requires_purchase`; `module()` |
+| **Agent** (v1 protocol) | `user_id, agent_key(unique), api_token_hash(sha256, unique), device_name, ip_address, os_type, agent_version, host_fingerprint, status, last_seen, token_last_rotated_at, last_nonce, metadata(json), registered_at`; relations `user, commands, heartbeats` |
+| **AgentCommand** | `command_uuid, agent_id, requested_by, approved_by, command_key, payload(json), signature_hash (HMAC-SHA256), nonce(uuid), expires_at, status ∈ {queued,sent,succeeded,failed,cancelled,expired}, queued_at, sent_at, started_at, finished_at, cancelled_at, cancel_reason`; `agent, requester, approver, result` |
+| **AgentCommandResult** | `agent_command_id (unique), result_status, exit_code, duration_ms, stdout, stderr, result_hash (sha256), artifacts(json), received_at` |
+| **AgentHeartbeat** | per-heartbeat log: `agent_id, status, ip_address, os_type, agent_version, host_fingerprint, metadata, seen_at` |
+| **AgentStatus** (simple presence) | `service_id, user_id, last_heartbeat, status ∈ {online,offline}, ip_address`; one row per (user, service); `isOnline()` |
+| **ActionLog** | audit trail: `user_id, action_description, logged_at` |
+
+**Relations summary:** User 1—* Agent, Payment, Entitlement, AgentStatus, ActionLog · Service 1—* Payment, AgentStatus · Course 1—* Module 1—* Lesson · Agent 1—* AgentCommand 1—1 AgentCommandResult, 1—* AgentHeartbeat.
+
+---
+
+## 6. Database Migrations (38 files)
+
+**Framework defaults:** `users` (+password reset tokens), `cache`, `jobs` (queues).
+
+**Domain migrations (chronological):**
+1. `2026_03_30` — create `services`.
+2. `2026_03_31` — update `services` add details · create `lessons` · create `courses` · create `modules`.
+3. `2026_04_06` — create `agents` · `agent_commands` · `agent_command_results` · `agent_heartbeats` · `purchases` · `entitlements` · add command security fields to `agents` (api_token_hash, token_last_rotated_at, last_nonce, agent_version, host_fingerprint, metadata, registered_at) · add `users.is_admin` · add access-control fields to academy tables (prices, requires_purchase, is_free) · add `logo_url` to services.
+4. `2026_05_15` — add SaaS fields to `services` (price, is_available, payment_instructions, script_code→longText) · create `agent_statuses` · create `payments` · create `action_logs` · create `personal_access_tokens`.
+5. `2026_05_16` — payments: text details, `expires_at`, product fields, make `service_id` nullable · lessons: `module_id`, `is_free` + **several schema-fix migrations** (`fix_lessons_table_columns`, `align_lessons_table_schema`, `final_lessons_table_cleanup`, `force_clean_lessons_schema`) ⚠️ sign of iterative schema churn on `lessons` · `price` on courses & academy tables.
+
+
+---
+
+## 7. Core Business Logic (Services)
+
+### 7.1 PaymentVerificationService (`app/Services/Payment/`)
+- `approve(Payment, User $admin)`:
+  - sets `status=approved`, `approved_at=now()`, `expires_at=now()+30 days`.
+  - for `product_type === 'service'` → generates license key `CWK-` + 16 uppercase random chars (uniqueness loop against `payments`).
+  - for `course|module|lesson` → `Entitlement::updateOrCreate` (active, +30 days window).
+  - writes `ActionLog` + sends **Telegram** approval message (user, product, amount in **SYP**, license, approving admin, link to admin payment page).
+- `reject(Payment, User)` → status `rejected` + ActionLog (no Telegram).
+- `getApprovedPayment(userId, serviceId, ?licenseKey)` / `userHasApprovedAccess(...)` → latest approved payment (optionally matching license).
+- **Note:** approval itself does not check expiry — expiry is enforced at script-fetch time.
+
+### 7.2 EntitlementService (`app/Services/Academy/`)
+Cascading access checks — `userHasCourseAccess`, `userHasModuleAccess`, `userHasLessonAccess`:
+- Admin always has access.
+- Order: approved non-expired Payment → active non-expired Entitlement → inherited from parent (lesson inherits module, module inherits course) → free if `!requires_purchase && price <= 0`.
+- `userHasLessonAccess` additionally returns true when `lesson->is_free`.
+
+### 7.3 AgentProtocolService (`app/Services/Agent/`) — v1 protocol
+- `register(payload)` → creates Agent, stores **sha256 hash** of a 64-char random plain token, returns `[agent, plainToken]` (plain token shown once).
+- `heartbeat(agent, payload)` → updates agent (status/ip/os/version/fingerprint/last_seen, merges metadata) + creates an `AgentHeartbeat` row.
+- `nextCommand(agent)` → first `queued`, unexpired command ordered by id → marks `sent` + `sent_at`.
+- `storeResult(agent, payload)` → finds command by `command_uuid`; **replay protection**: aborts 409 if `nonce === agent->last_nonce`; `updateOrCreate` result with sha256 `result_hash` of stdout+stderr; stores `last_nonce`; dispatches `ProcessAgentResultJob`.
+
+### 7.4 CommandCenter services
+- **CommandSigningService:** `HMAC-SHA256(json{command_key,payload,nonce,expires_at}, APP_KEY)`.
+- **CommandDispatchService:** `dispatch(agent, requester, commandKey, payload, ttl=300s)` → uuid command, signed, status `queued`, queues `DispatchAgentCommandJob`; `cancel(command, reason)` → no-op if already finished, else `cancelled` + timestamps + reason.
+
+### 7.5 TelegramService
+- `isConfigured()` (needs both env values), `sendMessage()` via `https://api.telegram.org/bot{token}/sendMessage` (HTML parse mode, 10s timeout; logs failures; silently skips when unconfigured).
+- Helpers: `notifyNewPaymentReceipt(Payment)`, `notifyAgentOffline(AgentStatus)`.
+
+### 7.6 ActionLogService — `ActionLog::create(user_id, description, logged_at)`.
+
+### 7.7 ServiceManagementService — normalizes create/update payloads for `Service` (slug auto-generated from title, default icon 🛡️, boolean casts).
+
+### 7.8 SecureVideoUpload (`app/Support/`)
+Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/mov/avi/wmv` extension **and** matching MIME; filename = `sha256(uniqid+name).ext`; saved to `storage/app/public/videos` (public disk).
+
+
+---
+
+## 8. HTTP Layer Details
+
+### Middleware
+- **AuthenticateAgent** (`agent.auth`): requires headers `X-Agent-Key` + `Authorization: Bearer <token>`; looks up Agent by key; constant-time `hash_equals(api_token_hash, sha256(token))`; attaches `agent` to request attributes; 401 otherwise.
+- **EnsureAdmin** (`admin`): 403 unless `$user->is_admin`.
+
+### Form Requests (`app/Http/Requests/`)
+- `Api\AgentRegisterRequest` — authorize: token user must equal submitted `user_id`; validates `agent_key` unique, optional ip/os/version/fingerprint/metadata.
+- `Api\AgentHeartbeatRequest`, `AgentHeartbeatApiRequest`, `AgentPollRequest`, `AgentResultRequest`, `FetchScriptRequest` — protocol payloads.
+- `Payment\StorePaymentDetailsRequest` — validates `product_type ∈ {service,course,module,lesson}`, `product_id` exists (custom after-hook per type), `account_name_number`, `transaction_amount`, `transaction_id_reference`, optional `notes`.
+- `CommandCenter\StoreAgentCommandRequest`, `CancelAgentCommandRequest`.
+- `Service\StoreServiceRequest`, `UpdateServiceRequest`.
+- `Auth\LoginRequest`, `ProfileUpdateRequest`.
+
+### Policies (Laravel convention auto-discovery)
+- `AgentCommandPolicy` — all abilities require `is_admin` (used by CommandCenterController via `$this->authorize`).
+- `CoursePolicy::view`, `ModulePolicy`, `LessonPolicy` — delegate to `EntitlementService`.
+
+### Jobs
+- `DispatchAgentCommandJob` — currently a **no-op stub** (only checks command is still `queued`).
+- `ProcessAgentResultJob` — sets command status to `succeeded`/`failed` from `result_status` + `finished_at = now()`.
+
+### Console Command
+- `agents:check-offline {--minutes=5}` — marks `AgentStatus` records `online` but stale (last_heartbeat older than threshold or null) as `offline` and sends a Telegram alert. Scheduled every 5 minutes.
+
+---
+
+## 9. Controllers & Views
+
+### Controllers of note
+- **PaymentController** — `showCheckout($slug, Request)` resolves product type from route name (`services/courses/modules/lessons`), loads approved/pending payments for the user, renders `payments.checkout` with `mockSlug`. `storePayment` validates submitted amount equals product price ±0.01 SYP, creates `pending` Payment, sends Telegram "New Payment Request". `mockGlobalPaymentSuccess` creates + immediately approves a payment (dev shortcut).
+- **UserToolController** — `index` lists approved service payments, **deletes old `agent-api` tokens and creates a fresh Sanctum token**, passes `baseUrl` + token to `my-tools` view. `downloadAgent` verifies approved payment (or `ADMIN-TEST-MODE` for admins) then **streams a generated Python bootstrapper** (`agent_bootstrapper.py`) with token/license/service-id baked in — 3 phases: setup, fetch (`/api/fetch-script`), execute (`exec`), then heartbeat loop every 60s.
+- **AgentApiController** (legacy API) — heartbeat requires approved license (admin exempt), upserts `AgentStatus`, Telegram alert on first connect; `fetchScript` validates license + non-expired (admin bypass key `ADMIN-TEST-MODE`), returns `script_code`; 404 if no script configured.
+- **AgentController** (v1) — thin wrapper over `AgentProtocolService` with FormRequest validation; returns command `{uuid,key,payload,signature_hash,nonce,expires_at}` on poll.
+- **AcademyController** — admin CRUD for Course/Module/Lesson incl. local video upload via `SecureVideoUpload`, unique slug generation per module.
+- **CourseController** — public catalog/detail/lesson pages with entitlement gating (403-style redirect for locked lessons).
+- **Admin\PaymentController** — paginated list w/ status filter, show, approve/reject (only from `pending`), delegates to `PaymentVerificationService`.
+- **Admin\CommandCenterController** — lists agents + paginated commands; store/cancel with policy checks.
+- **Admin\ServiceController** — resource CRUD via `ServiceManagementService`.
+- **AdminController** — dashboard stats: services, lessons, pending payments, courses count, online agents; plus a quick "add lesson" action.
+
+### Blade views (57 files, `resources/views/`)
+- **Layouts:** `layouts/app.blade.php` (public, "Cyber-Dark" theme), `layouts/admin.blade.php` (admin panel), `layouts/guest.blade.php`, `layouts/navigation.blade.php`.
+- **Public:** `welcome` (landing), `about`, `contact`, `services`, `service-details`, `courses/index`, `courses/show`, `lessons/show`, `my-tools`, `dashboard` (admin), `payments/checkout`.
+- **Admin:** `admin/acade/index`, `admin/command-center/index`, `admin/courses/{edit,show}`, `admin/lessons/edit`, `admin/modules/edit`, `admin/payments/{index,show}`, `admin/services/{_form,create,edit,index,show}`.
+- **Auth (Breeze):** login, register, forgot-password, reset-password, confirm-password, verify-email.
+- **Profile:** edit + partials (update-profile, update-password, delete-user).
+- **Components:** application-logo, auth-session-status, buttons, dropdown, input-*, modal, nav-links (Alpine.js driven).
+
+**Frontend style:** Tailwind with brand color `karam-green #00f260`, Figtree font, `@tailwindcss/forms`. `.cursorrules` mandates a "Cyber-Dark" admin theme.
+
+
+---
+
+## 10. Tests (`tests/`, PHPUnit 11)
+
+| File | Covers |
+|---|---|
+| `Feature/SaasPlatformTest.php` | admin approves payment → license issued; user submits receipt (DB pending); `/api/fetch-script` 403 w/o license → 200 with valid license |
+| `Feature/CommandCenterAndAgentFlowTest.php` | admin queues command; non-admin 403; **full agent flow**: register → poll → result; entitlement gates academy endpoints (403 → 200 after Entitlement created) |
+| `Feature/ExampleTest`, `Unit/ExampleTest` | framework defaults |
+| `Feature/ProfileTest` | profile update/delete |
+| `Feature/Auth/*` (6 files) | Breeze: authentication, email verification, password confirmation/reset/update, registration |
+
+**Test env** (`phpunit.xml`): in-memory SQLite, sync queue, array cache/session/mail, `BCRYPT_ROUNDS=4`.
+
+---
+
+## 11. The Python Agent
+
+### `agent.py` (repo root — legacy/demo loop)
+- Reads `SANCTUM_TOKEN` env var; exits if missing.
+- Loop (every 300s): `POST /api/heartbeat` (service_id=1, status online, timestamp) then `GET /api/fetch-script` (service_id=1, license `CWK-TEST-KEY-001`) and **`exec(script_code)`**.
+- Handles 403 "expired" messages by exiting with a renewal warning.
+- ⚠️ Contains a commented security warning: `exec()` on remote code is dangerous — only acceptable because the API is trusted/licensed.
+
+### `agent_bootstrapper.py` (generated by `UserToolController@downloadAgent`)
+- Cross-platform; auto-installs `requests` if missing.
+- Bakes in `BASE_URL`, `SANCTUM_TOKEN`, `SERVICE_ID`, `LICENSE_KEY`.
+- Phases: (1) env verify, (2) fetch payload from `/api/fetch-script`, (3) `exec(payload)`; then heartbeats to `/api/heartbeat` every 60s forever.
+
+---
+
+## 12. End-to-End Flows
+
+### Flow A — Buy a security service & run the agent
+1. Visitor browses `/services` → `/services/{slug}` → Pay → `/services/{slug}/pay` (auth+verified).
+2. Checkout form: account name/number, transaction amount (must match price), reference ID, notes → `POST /payment/submit` → Payment `pending` → Telegram alert to admin.
+3. Admin: `/admin/payments` → show → **Approve** → license `CWK-…` generated, `expires_at +30d`, ActionLog + Telegram message.
+4. User: `/my-tools` → gets Sanctum token + license → downloads `agent_bootstrapper.py` (or uses `agent.py`).
+5. Agent loop: heartbeat (403 unless approved license) and `fetch-script` (403 if invalid/expired license) → executes `script_code` stored on the Service by the admin.
+
+### Flow B — Command Center (v1 agent protocol)
+1. Agent `POST /api/v1/agents/register` (Sanctum) → gets one-time `api_token` (only sha256 stored server-side).
+2. Admin `/admin/command-center` → `POST /admin/command-center/commands` (policy-checked) → `CommandDispatchService` signs (HMAC) + queues command (TTL default 300s).
+3. Agent polls `POST /api/v1/agents/poll` with `X-Agent-Key` + Bearer → receives command or `null`; command moves `queued → sent`.
+4. Agent executes and `POST /api/v1/agents/result` with `command_uuid` + unique `nonce` (409 on replay) → result stored → `ProcessAgentResultJob` marks command `succeeded`/`failed`.
+5. Admin can cancel non-terminal commands (`cancelled` + reason).
+6. Stale presence: `agents:check-offline` (every 5 min) flips `agent_statuses.online → offline` + Telegram alert.
+
+### Flow C — Academy purchase
+1. `/courses` → `/courses/{slug}` → checkout route (service/course/module/lesson variants all reuse `PaymentController@showCheckout`).
+2. Receipt submitted → pending → admin approves → **Entitlement** created (30 days).
+3. `EntitlementService` gates `/academy/*` JSON endpoints, `courses/show`, `lessons/show` (free lessons always visible; admin bypasses all).
+
+
+---
+
+## 13. Security Mechanisms (and gaps)
+
+**Implemented:**
+- `is_admin` middleware + policies on all admin/command routes; Breeze auth + email verification.
+- Sanctum-style token hashing for v1 agents (`sha256` at rest, `hash_equals` compare); one-time plain token at register.
+- Command integrity: HMAC-SHA256 signature with `APP_KEY`, UUID nonce, expiry TTL, replay detection via `last_nonce` (409).
+- License keys: `CWK-` + 16 high-entropy chars, uniqueness enforced; expiry checked at script-fetch time.
+- Receipt amount must match product price (±0.01) to prevent underpayment.
+- HTML sanitization of `Service.full_description` (tag allow-list); video upload extension+MIME validation, safe hashed filenames, path-traversal rejection.
+- API throttling (`throttle:api`), CSRF exemption limited to `api/*`, FormRequest validation everywhere.
+- Audit logging (`action_logs`) for payment approve/reject.
+
+**Known gaps / notes (be aware when working on the project):**
+- Two parallel agent systems coexist: the licensed legacy API (`/api/heartbeat`, `/api/fetch-script` with Sanctum + license key) and the stronger v1 protocol (`X-Agent-Key` + hashed token).
+- Admin bypass key `ADMIN-TEST-MODE` exists in code for `fetchScript` and agent download.
+- `DispatchAgentCommandJob` / `ProcessAgentResultJob` are minimal (dispatch job is effectively a stub).
+- `payment.mock-global-success` route auto-approves payments — must be disabled/removed in production.
+- `/my-tools` regenerates the Sanctum `agent-api` token on every page load (deletes prior ones), invalidating running agents' tokens.
+- Currency labeled **SYP** (Syrian Pounds) throughout.
+- Multiple `lessons` schema-fix migrations indicate past churn — verify migration state before adding new ones.
+- Git working tree has 24 modified files + untracked `app/Support/` not yet committed.
+
+---
+
+## 14. Conventions & AI Rules (`.cursorrules`)
+
+The repo carries explicit AI-coding rules:
+1. **Communication:** be concise, incremental edits only ("..." for unchanged code), no hallucinated variables/models — ask instead.
+2. **Context:** only scan files referenced with `@`; never index `vendor/`, `node_modules/`, `storage/`, `public/assets/`.
+3. **Standards:** Laravel 12 best practices (service classes, type-hinting, Sanctum for API); check SQL injection, mass assignment, and always apply `is_admin` middleware to admin routes; **Python agent must stay dependency-free (only `requests`)**.
+4. **Branding:** Admin UI = "Cyber-Dark" Tailwind theme; payments manual (receipt upload) with `pending/approved` logic; license keys via `Str::uuid()` or high-entropy string.
+5. Acknowledge with "Rules Loaded".
+
+---
+
+## 15. How to Run
+
+```bash
+composer setup      # install + .env + key + migrate + npm install/build
+composer dev        # serve + queue + pail logs + vite (concurrently)
+# or manually:
+php artisan serve
+php artisan queue:listen --tries=1
+php artisan schedule:work        # for agents:check-offline
+npm run dev
+composer test       # run PHPUnit
+```
+
+- Seeder: `php artisan db:seed` → truncates and re-creates **10 demo services** (Web App Pentesting, Network Security Audit, API Security Testing, Advanced Manual Exploitation, SIEM Deployment, Endpoint Protection (EDR), Incident Response Plan, Security Consultation, AWS/Azure Hardening, Kubernetes Security) across categories VAPT / SOC / Consultation / Cloud.
+- Create an admin: set `is_admin = true` on a user row (no seeder does this automatically).
+- Telegram: set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (already present in local `.env`).
+
+---
+
+## 16. Quick File Index for AI Agents
+
+| If you need to… | Read |
+|---|---|
+| Understand routing | `routes/web.php`, `routes/api.php`, `routes/auth.php`, `routes/console.php`, `bootstrap/app.php` |
+| Payment logic | `app/Services/Payment/PaymentVerificationService.php`, `app/Http/Controllers/PaymentController.php`, `app/Http/Controllers/Admin/PaymentController.php` |
+| Academy access rules | `app/Services/Academy/EntitlementService.php`, `app/Http/Controllers/CourseController.php` |
+| Agent v1 protocol | `app/Services/Agent/AgentProtocolService.php`, `app/Http/Controllers/Api/AgentController.php`, `app/Http/Middleware/AuthenticateAgent.php` |
+| Legacy script/heartbeat API | `app/Http/Controllers/Api/AgentApiController.php`, `agent.py` |
+| Command center | `app/Services/CommandCenter/*`, `app/Http/Controllers/Admin/CommandCenterController.php`, `app/Models/AgentCommand.php` |
+| Telegram alerts | `app/Services/Telegram/TelegramService.php`, `config/telegram.php` |
+| Schema | `database/migrations/*`, `app/Models/*` |
+| Admin UI style | `resources/views/layouts/admin.blade.php`, `tailwind.config.js` |
+| Agent download generator | `app/Http/Controllers/UserToolController.php` |
+| Tests / expected behavior | `tests/Feature/SaasPlatformTest.php`, `tests/Feature/CommandCenterAndAgentFlowTest.php` |
+

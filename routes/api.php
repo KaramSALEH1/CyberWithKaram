@@ -10,9 +10,19 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/agent/token', [AgentApiController::class, 'createToken']);
 });
 
-Route::prefix('v1/agent')->middleware('throttle:api')->group(function () {
-    Route::post('/register', [AgentController::class, 'register']);
+Route::prefix('v1/agents')->middleware('throttle:api')->group(function () {
+    Route::post('/register', [AgentController::class, 'register'])->middleware('auth:sanctum');
 
+    Route::middleware('agent.auth')->group(function () {
+        Route::post('/heartbeat', [AgentController::class, 'heartbeat']);
+        Route::post('/poll', [AgentController::class, 'poll']);
+        Route::post('/result', [AgentController::class, 'result']);
+    });
+});
+
+// Legacy alias
+Route::prefix('v1/agent')->middleware('throttle:api')->group(function () {
+    Route::post('/register', [AgentController::class, 'register'])->middleware('auth:sanctum');
     Route::middleware('agent.auth')->group(function () {
         Route::post('/heartbeat', [AgentController::class, 'heartbeat']);
         Route::post('/poll', [AgentController::class, 'poll']);

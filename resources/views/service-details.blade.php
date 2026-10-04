@@ -44,6 +44,10 @@
                                     class="btn-primary-cyan px-10 py-4 text-lg shadow-[0_0_40px_rgba(0,242,255,0.3)] hover:shadow-[0_0_50px_rgba(0,242,255,0.5)] transform hover:-translate-y-1">
                                     Download Agent
                                 </a>
+                                <a href="{{ route('my-tools.index') }}"
+                                    class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
+                                    Deployment Commands
+                                </a>
                                 <button @click="openDocs = true"
                                     class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
                                     View Documentation
@@ -95,7 +99,7 @@
                 </div>
 
                 <div class="p-8 overflow-y-auto custom-scrollbar prose prose-invert max-w-none">
-                    {!! $service->full_description ?? 'No detailed documentation available yet.' !!}
+                    {!! nl2br(e(strip_tags($service->full_description ?? 'No detailed documentation available yet.'))) !!}
                 </div>
 
                 <div class="p-4 border-t border-white/5 text-right">

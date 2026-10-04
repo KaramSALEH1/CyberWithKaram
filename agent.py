@@ -1,11 +1,14 @@
-
 import requests
 import time
 import os
+import sys
 
 # Configuration
 BASE_URL = "http://localhost:8000"  # Replace with your Laravel application URL
-SANCTUM_TOKEN = os.environ.get("SANCTUM_TOKEN", "sPKp69kclajact1baX8L7eiHtzItHBsziMhCEgaC5061104e") # Get token from env or replace
+SANCTUM_TOKEN = os.environ.get("SANCTUM_TOKEN")
+if not SANCTUM_TOKEN:
+    print("[-] Set SANCTUM_TOKEN environment variable before running.")
+    sys.exit(1)
 
 # API Endpoints
 FETCH_SCRIPT_ENDPOINT = f"{BASE_URL}/api/fetch-script"
