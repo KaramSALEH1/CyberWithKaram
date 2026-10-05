@@ -1,55 +1,97 @@
 @extends('layouts.app')
-@section('title', 'Our Services')
+@section('title', 'Cybersecurity Services Matrix')
 
 @section('content')
-    <div class="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-cyan-500/30">
+    @php
+        $categories = collect($services)->pluck('category')->filter()->unique()->values();
+        $categoryStyles = [
+            'Blue Team' => 'border-blue-400/30 text-blue-300',
+            'Red Team' => 'border-red-400/30 text-red-300',
+            'Cloud Security' => 'border-sky-400/30 text-sky-300',
+        ];
+        $totalCount = $services->count();
+    @endphp
+
+    <div class="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-cyan-500/30"
+        x-data="{
+            activeCategory: @js($categories->contains(request('category')) ? request('category') : 'all'),
+            matches(category) {
+                return this.activeCategory === 'all' || this.activeCategory === category;
+            },
+            countFor(category) {
+                return category === 'all'
+                    ? {{ $totalCount }}
+                    : {{ $totalCount }};
+            }
+        }">
         <section class="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
-            <div class="text-center mb-20">
-                <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 text-white uppercase italic">
-                    The <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Arsenal</span>
+            <div class="text-center mb-12">
+                <span class="inline-block font-mono text-[11px] uppercase tracking-[0.35em] text-karam-green mb-5">
+                    CyberLogia
+                </span>
+
+                <h1 dir="rtl" lang="ar"
+                    class="text-4xl md:text-6xl font-black tracking-tight mb-3 text-white">
+                    مصفوفة الخدمات السيبرانية
                 </h1>
+
+                <h2 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-6 text-karam-green">
+                    Cybersecurity Services Matrix
+                </h2>
+
                 <p class="text-gray-500 text-lg max-w-2xl mx-auto font-medium">
-                    Professional-grade cybersecurity tools and defensive assets.
-                    Equip your infrastructure with elite-level protection.
+                    Ten production-grade automated agents for Blue Team, Red Team and Cloud Security.
+                    Deploy in minutes — no infrastructure to provision.
                 </p>
+            </div>
 
-                @php
-                    $categories = collect($services)->pluck('category')->filter()->unique();
-                    $categoryStyles = [
-                        'Blue Team' => 'border-blue-400/30 text-blue-300',
-                        'Red Team' => 'border-red-400/30 text-red-300',
-                        'Cloud Security' => 'border-sky-400/30 text-sky-300',
-                    ];
-                @endphp
+            <!-- Category filters -->
+            @if ($categories->isNotEmpty())
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-6"
+                    role="tablist" aria-label="Filter services by category">
+                    <button type="button" @click="activeCategory = 'all'"
+                        :class="activeCategory === 'all'
+                            ? 'bg-karam-green text-black border-karam-green'
+                            : 'bg-white/[0.03] text-gray-300 border-white/10 hover:border-karam-green hover:text-karam-green'"
+                        class="inline-flex items-center gap-2 border px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all"
+                        :aria-selected="activeCategory === 'all'">
+                        All
+                        <span class="opacity-70 font-mono">({{ $totalCount }})</span>
+                    </button>
 
-                @if ($categories->isNotEmpty())
-                    <div class="flex flex-wrap items-center justify-center gap-3 mt-10">
-                        <span class="text-[10px] font-mono text-gray-600 uppercase tracking-[0.2em]">Filter:</span>
-                        @foreach ($categories as $category)
-                            <span
-                                class="inline-flex items-center border {{ $categoryStyles[$category] ?? 'border-cyan-400/30 text-cyan-300' }} bg-white/[0.03] px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest">
-                                {{ $category }}
+                    @foreach ($categories as $category)
+                        <button type="button" @click="activeCategory = @js($category)"
+                            :class="activeCategory === @js($category)
+                                ? 'bg-karam-green text-black border-karam-green'
+                                : '{{ $categoryStyles[$category] ?? 'border-cyan-400/30 text-cyan-300' }} bg-white/[0.03] hover:brightness-125'"
+                            class="inline-flex items-center gap-2 border px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all"
+                            :aria-selected="activeCategory === @js($category)">
+                            <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                            {{ $category }}
+                            <span class="opacity-70 font-mono">
+                                ({{ $services->where('category', $category)->count() }})
                             </span>
-                        @endforeach
-                    </div>
-                @endif
-
-                <div class="flex flex-wrap items-center justify-center gap-3 mt-8">
-                    <span
-                        class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest">
-                        <span class="relative flex h-1.5 w-1.5">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-                        </span>
-                        Every service ships as a self-installing automated agent
-                    </span>
+                        </button>
+                    @endforeach
                 </div>
+            @endif
+
+            <div class="flex flex-wrap items-center justify-center gap-3 mb-10">
+                <span
+                    class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest">
+                    <span class="relative flex h-1.5 w-1.5">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                    </span>
+                    Every service ships as a self-installing automated agent
+                </span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse ($services as $service)
-                    <div
+                    <div x-show="matches(@js($service->category))"
+                        x-transition.opacity.duration.300ms
                         class="bento-card group relative bg-[#0a0a0a] border border-[#00f2ff33] rounded-2xl p-8 flex flex-col transition-all duration-500 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(0,242,255,0.15)] overflow-hidden">
                         <!-- Background Glow -->
                         <div
@@ -91,12 +133,12 @@
 
                             <div class="flex flex-wrap gap-2 mb-4">
                                     @php
-                                        $categoryStyles = [
+                                        $badgeStyles = [
                                             'Blue Team' => 'bg-blue-500/10 border-blue-400/30 text-blue-300',
                                             'Red Team' => 'bg-red-500/10 border-red-400/30 text-red-300',
                                             'Cloud Security' => 'bg-sky-500/10 border-sky-400/30 text-sky-300',
                                         ];
-                                        $badgeStyle = $categoryStyles[$service->category] ?? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
+                                        $badgeStyle = $badgeStyles[$service->category] ?? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
                                     @endphp
                                     <span
                                         class="inline-flex items-center gap-1.5 border {{ $badgeStyle }} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -160,13 +202,45 @@
                     </div>
                 @empty
                     <div class="col-span-full py-20 text-center border border-dashed border-white/10 rounded-3xl">
-                        <p class="text-gray-500 font-mono italic">No assets currently deployed in the arsenal.</p>
+                        <p class="text-gray-500 font-mono italic">No services are currently available.</p>
                     </div>
                 @endforelse
+            </div>
+
+            <!-- Filtered-empty state (shown when a category has no cards) -->
+            <div x-show="false" x-cloak id="no-match-state"
+                class="mt-6 py-16 text-center border border-dashed border-white/10 rounded-3xl">
+                <p class="text-gray-500 font-mono italic">
+                    No agents in this category yet.
+                </p>
             </div>
         </section>
     </div>
 @endsection
+
+@push('scripts')
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        // Hide the whole grid when the active filter matches nothing, and show
+        // the "no match" hint instead.
+        document.addEventListener('DOMContentLoaded', function () {
+            const root = document.querySelector('[x-data]');
+            if (!root) return;
+            const grid = root.querySelector('.grid');
+            const empty = document.getElementById('no-match-state');
+            if (!grid || !empty) return;
+
+            const update = () => {
+                const visible = Array.from(grid.querySelectorAll('[x-show]'))
+                    .filter((el) => el.offsetParent !== null);
+                empty.style.display = visible.length === 0 ? 'block' : 'none';
+            };
+
+            root.addEventListener('click', () => setTimeout(update, 350));
+            setTimeout(update, 600);
+        });
+    </script>
+@endpush
 
 <style>
     @keyframes pulse-green {

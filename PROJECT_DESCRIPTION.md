@@ -62,10 +62,10 @@ which divide `price` by `config('cyberlogia.syp_per_usd')` (default `10000`).
 | Framework | Laravel 12 (`laravel/framework ^12.0`), PHP `^8.2` |
 | Auth (web) | Laravel Breeze (`^2.4`, dev dep) — Blade + Alpine.js session auth, email verification |
 | Auth (API) | Laravel Sanctum (`^4.3`) — personal access tokens for Python agents |
-| Database | **SQLite** (`database/database.sqlite`); sessions/cache/queues on `database` driver |
+| Database | **MySQL / MariaDB** (`cyber_with_karam` @ `127.0.0.1:3306`); sessions/cache/queues on `database` driver |
 | Frontend | Blade, **Tailwind CSS 3** (`@tailwindcss/forms`, custom `karam-green: #008751`, Figtree font), **Alpine.js 3**, **Vite 7** (`laravel-vite-plugin`), Axios |
 | Queue | `database` queue driver; workers via `php artisan queue:listen` |
-| Tests | PHPUnit `^11.5.50` (in-memory SQLite, `QUEUE_CONNECTION=sync`) |
+| Tests | PHPUnit `^11.5.50` (MySQL test DB `cyber_with_karam_test`, `QUEUE_CONNECTION=sync`) |
 | Python agent | Generated `agent_bootstrapper.py` (needs `requests`; auto-installed). Seeded service payloads use **only the standard library** |
 | Other | Laravel Pint, Pail, Sail, Tinker, Faker, Mockery, Collision, `concurrently` |
 | Notifications | Telegram Bot API via `Http` facade (`config/telegram.php` ← `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`). Failures are caught and logged — they never break a core flow |
@@ -76,7 +76,7 @@ which divide `price` by `config('cyberlogia.syp_per_usd')` (default `10000`).
 - `composer dev` — concurrently: `php artisan serve` + `queue:listen` + `pail` + `npm run dev`
 - `composer test` — `config:clear` + `php artisan test`
 
-**Environment (`.env`):** `APP_URL=http://localhost`, `DB_CONNECTION=sqlite`, `SESSION_DRIVER=database`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `MAIL_MAILER=log`, Telegram vars configured.
+**Environment (`.env`):** `APP_URL=http://localhost`, `DB_CONNECTION=mysql`, `SESSION_DRIVER=database`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `MAIL_MAILER=log`, Telegram vars configured.
 
 **Health endpoint:** `/up` (registered in `bootstrap/app.php`).
 
@@ -129,7 +129,6 @@ CyberLogia/                            # repo dir still named CyberWithKaram
 │   ├── Support/SecureVideoUpload.php
 │   └── View/Components/{AppLayout, GuestLayout}.php
 ├── database/
-│   ├── database.sqlite
 │   ├── factories/UserFactory.php
 │   ├── migrations/   # 38 migrations (see §6)
 │   └── seeders/DatabaseSeeder.php          # 10 demo security services
@@ -158,7 +157,8 @@ CyberLogia/                            # repo dir still named CyberWithKaram
 |---|---|---|---|
 | GET | `/` | `home` | Landing page; shows visible services (guards with `Schema::hasTable`) |
 | GET | `/about` | `about` | Static |
-| GET | `/contact` | `contact` | Static |
+| GET | `/contact` | `ContactController@show` | Contact page (support channels + enquiry form) |
+| POST | `/contact` | `ContactController@store` | Validates the enquiry and forwards it to the Telegram operations channel |
 | GET | `/services` | `services` | Lists `is_visible` services |
 | GET | `/services/{service:slug}` | `service.show` | Details; computes `hasApprovedAccess` + `userLicenseKey` for logged-in user |
 | GET | `/courses` | `courses` | Active courses |
@@ -181,6 +181,7 @@ CyberLogia/                            # repo dir still named CyberWithKaram
 - `GET /admin/dashboard` → `admin.dashboard` (uses `AdminController@index` → `dashboard` view)
 - **Command Center:** `GET /admin/command-center` (`admin.command-center.index`), `POST .../commands` (store), `POST .../commands/{command}/cancel` (cancel)
 - **Payments:** `GET /admin/payments` (list, filter `?status=`), `GET /admin/payments/{payment}`, `POST .../approve`, `POST .../reject`
+- **Subscriptions report:** `GET /admin/subscriptions` → `admin.subscriptions.index` (`Admin\SubscriptionController@index`). Analytics dashboard for subscribers, licence keys and lifecycle. Supports `?status=` (`all|active|expiring|expired|pending|rejected`) and `?q=` (searches user name/email, licence key and service title). Renders 8 stat cards (total, active, expiring soon, expired, pending, licences issued, active customers, active MRR in SYP), a per-category catalogue breakdown, status badges and a paginated table. Linked from the admin sidebar.
 - **Academy** (prefix `/admin/academy`): course/module/lesson `store`, `{id}/edit`, `PUT`, `DELETE`; `GET /admin/academy/courses/{course}` → `admin.course.show`
 - **Services:** full `Route::resource` (`admin.services.*`)
 
@@ -301,8 +302,27 @@ Cascading access checks — `userHasCourseAccess`, `userHasModuleAccess`, `userH
 - **CommandDispatchService:** `dispatch(agent, requester, commandKey, payload, ttl=300s)` → uuid command, signed, status `queued`, queues `DispatchAgentCommandJob`; `cancel(command, reason)` → no-op if already finished, else `cancelled` + timestamps + reason.
 
 ### 8.5 TelegramService
-- `isConfigured()` (needs both env values), `sendMessage()` via `https://api.telegram.org/bot{token}/sendMessage` (HTML parse mode, 10s timeout; logs failures; silently skips when unconfigured).
+- `isConfigured()` requires both `TELEGRAM_BOT_TOKEN` **and** a valid numeric `TELEGRAM_CHAT_ID`.
+- `targetChatId()` resolves the destination and returns `null` when unset or non-numeric — **there is deliberately no hardcoded or legacy fallback**, so a missing/invalid value disables notifications rather than delivering them to an unintended chat.
+- `sendMessage()` posts HTML to `https://api.telegram.org/bot{token}/sendMessage` with a configurable timeout (`TELEGRAM_TIMEOUT`, default 10s). `ConnectionException` is caught and logged so notification outages never break payment approval or agent registration.
 - Helpers: `notifyNewPaymentReceipt(Payment)`, `notifyAgentOffline(AgentStatus)`.
+
+**Configuration (`config/telegram.php`)**
+
+| Key | Env | Notes |
+|---|---|---|
+| `bot_token` | `TELEGRAM_BOT_TOKEN` | From @BotFather. No fallback. |
+| `chat_id` | `TELEGRAM_CHAT_ID` | **Numeric id only** of the operations chat (`@kachat3`). Groups start with `-100`. |
+| `timeout` | `TELEGRAM_TIMEOUT` | Seconds, default `10`. |
+| `chat_label` | `TELEGRAM_CHAT_LABEL` | Human-readable label, default `@kachat3`. |
+
+Telegram cannot deliver to an `@username` directly — the numeric id must be resolved.
+Use the built-in diagnostic:
+
+```bash
+php artisan telegram:test              # verify config + send a test message
+php artisan telegram:test -- --resolve # list chats the bot can see, to find the id
+```
 
 ### 8.6 ActionLogService — `ActionLog::create(user_id, description, logged_at)`.
 
@@ -351,19 +371,52 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 - **AcademyController** — admin CRUD for Course/Module/Lesson incl. local video upload via `SecureVideoUpload`, unique slug generation per module.
 - **CourseController** — public catalog/detail/lesson pages with entitlement gating (403-style redirect for locked lessons).
 - **Admin\PaymentController** — paginated list w/ status filter, show, approve/reject (only from `pending`), delegates to `PaymentVerificationService`.
+- **Admin\SubscriptionController** — `/admin/subscriptions` analytics report (stat cards, status badges, filters, search, pagination). See §5.1.
 - **Admin\CommandCenterController** — lists agents + paginated commands; store/cancel with policy checks.
 - **Admin\ServiceController** — resource CRUD via `ServiceManagementService`.
 - **AdminController** — dashboard stats: services, lessons, pending payments, courses count, online agents; plus a quick "add lesson" action.
+- **ContactController** — `show` renders the Cyber-Dark contact page; `store` validates the enquiry and forwards it to Telegram (best-effort).
+
+### Authentication flow
+
+Post-login routing is **role-aware** (`AuthenticatedSessionController::store`):
+
+| User | Redirect |
+|---|---|
+| `is_admin === true` | `/admin/dashboard` (`route('dashboard')`) |
+| `is_admin === false` | `/` (`route('home')`) |
+
+A previously intended URL (e.g. a protected page the visitor was bounced from) still takes
+priority via `redirect()->intended($default)`.
+
+> The previous build sent *every* user to `route('dashboard')`, which is the admin-only
+> `/admin/dashboard` endpoint — so non-admins landed on a 403 immediately after logging in.
+
+**Registration does not auto-login.** `RegisteredUserController::store` creates the user,
+fires the `Registered` event (preserving Breeze email verification), then redirects to
+`/login` with the flash message **"Registration successful! Please log in."**. The login
+screen shows a "Don't have an account? Register" CTA linking to `/register`.
 
 ### Blade views (57 files, `resources/views/`)
-- **Layouts:** `layouts/app.blade.php` (public, "Cyber-Dark" theme), `layouts/admin.blade.php` (admin panel), `layouts/guest.blade.php`, `layouts/navigation.blade.php`.
-- **Public:** `welcome` (landing), `about`, `contact`, `services`, `service-details`, `courses/index`, `courses/show`, `lessons/show`, `my-tools`, `dashboard` (admin), `payments/checkout`.
-- **Admin:** `admin/acade/index`, `admin/command-center/index`, `admin/courses/{edit,show}`, `admin/lessons/edit`, `admin/modules/edit`, `admin/payments/{index,show}`, `admin/services/{_form,create,edit,index,show}`.
-- **Auth (Breeze):** login, register, forgot-password, reset-password, confirm-password, verify-email.
+- **Layouts:** `layouts/app.blade.php` (public, "Cyber-Dark" theme), `layouts/admin.blade.php` (admin panel, with a **Subscriptions** sidebar link), `layouts/guest.blade.php`, `layouts/navigation.blade.php`.
+- **Public:** `welcome` (landing), `about` (Cyber-Dark redesign describing the Blue/Red/Cloud agent families), `contact` (Cyber-Dark redesign: support channel cards + validated enquiry form), `services` (branded **"مصفوفة الخدمات السيبرانية / Cybersecurity Services Matrix"** headline + Alpine.js category filtering), `service-details`, `courses/index`, `courses/show`, `lessons/show`, `my-tools`, `dashboard` (admin), `payments/checkout`.
+- **Admin:** `admin/acade/index`, `admin/command-center/index`, `admin/courses/{edit,show}`, `admin/lessons/edit`, `admin/modules/edit`, `admin/payments/{index,show}`, **`admin/subscriptions/index`**, `admin/services/{_form,create,edit,index,show}`.
+- **Auth (Breeze):** login (with register CTA), register, forgot-password, reset-password, confirm-password, verify-email.
 - **Profile:** edit + partials (update-profile, update-password, delete-user).
 - **Components:** application-logo, auth-session-status, buttons, dropdown, input-*, modal, nav-links (Alpine.js driven).
 
-**Frontend style:** Tailwind with brand color `karam-green #00f260`, Figtree font, `@tailwindcss/forms`. `.cursorrules` mandates a "Cyber-Dark" admin theme.
+### Services page category filtering
+
+`/services` filters client-side with Alpine.js (no page reload, grid layout preserved):
+
+- `x-data` holds `activeCategory` (initialised from `?category=`, validated against the
+  real category list) plus a `matches(category)` predicate.
+- Each card is wrapped in `x-show="matches(@js($service->category))"` with a short opacity
+  transition; the active filter button is highlighted via `:class` binding.
+- Per-category counts are rendered server-side, and a "no agents in this category" hint
+  appears when a filter yields no cards.
+
+**Frontend style:** Tailwind with brand color `karam-green #008751` (utility class; `#00f260` used for glow accents), Figtree font, `@tailwindcss/forms`. `.cursorrules` mandates a "Cyber-Dark" admin theme.
 
 
 ---
@@ -372,15 +425,15 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 
 | File | Covers |
 |---|---|
-| `Feature/SaasPlatformTest.php` | admin approves payment → licence issued; user submits receipt (DB pending); `/api/fetch-script` 403 w/o licence → 200 with valid licence; **generated bootstrapper** is valid Python with all placeholders resolved + licence baked in; download rejected without an approved licence; **seeded catalog** has exactly 10 automated services with correct category/price/script/details; **mock-payment bypass returns 404 in production**; USD price + label derivation; **API endpoints authenticated & rate limited**; HTML sanitizer strips tags/attributes; storefront + `/my-tools` render badges and `expires_at` |
+| `Feature/SaasPlatformTest.php` | admin approves payment → licence issued; user submits receipt (DB pending); `/api/fetch-script` 403 w/o licence → 200 with valid licence; **generated bootstrapper** is valid Python with all placeholders resolved + licence baked in; download rejected without an approved licence; **seeded catalog** has exactly 10 automated services with correct category/price/script/details; **mock-payment bypass returns 404 in production**; USD price + label derivation; **API endpoints authenticated & rate limited**; HTML sanitizer strips tags/attributes; storefront + `/my-tools` render badges and `expires_at`; **contact form validation**; **about page branding**; **services page category filters**; **admin subscriptions report** (access control, rendering, status filters, licence/email search) |
 | `Feature/CommandCenterAndAgentFlowTest.php` | admin queues command; non-admin 403; **full agent flow**: register → poll → result; entitlement gates academy endpoints (403 → 200 after Entitlement created) |
 | `Feature/ExampleTest`, `Unit/ExampleTest` | framework defaults |
 | `Feature/ProfileTest` | profile update/delete |
-| `Feature/Auth/*` (6 files) | Breeze: authentication, email verification, password confirmation/reset/update, registration |
+| `Feature/Auth/*` (6 files) | Breeze: authentication, email verification, password confirmation/reset/update, registration. Includes **role-aware login redirects** (admin → `/admin/dashboard`, user → `/`) and **registration that does not auto-login** (redirects to `/login` with a flash status) |
 
-**Test env** (`phpunit.xml`): in-memory SQLite, sync queue, array cache/session/mail, `BCRYPT_ROUNDS=4`.
+**Test env** (`phpunit.xml`): MySQL test database `cyber_with_karam_test`, sync queue, array cache/session/mail, `BCRYPT_ROUNDS=4`.
 
-Current status: **40 tests / 222 assertions — all passing.**
+Current status: **48 tests / 278 assertions — all passing.**
 
 ---
 
@@ -521,7 +574,8 @@ composer test       # run PHPUnit
 
 - Seeder: `php artisan db:seed` → clears `services` and re-creates the **10 automated CyberLogia agents** (EDR & Threat Hunting, CIS Hardening, Log Collector/SIEM, FIM, Ransomware/Breach Simulation, Internal Vuln Scanner, Local App Misconfig, Cloud Sandbox/Attachment Auditor, Cloud CIS Benchmarking, K8s & Docker Auditor) across **Blue Team / Red Team / Cloud Security**. Idempotent — re-running always leaves exactly 10 rows.
 - Create an admin: set `is_admin = true` on a user row (no seeder does this automatically).
-- Telegram: set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (already present in local `.env`).
+- Telegram: set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (already present in local `.env`). Verify with `php artisan telegram:test`; use `php artisan telegram:test -- --resolve` if you need to find the numeric chat id.
+- Admin analytics: `/admin/subscriptions` (`php artisan route:list --name=admin.subscriptions` to confirm the route).
 
 ---
 

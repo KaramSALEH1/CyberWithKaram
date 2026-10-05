@@ -21,6 +21,14 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     *
+     * Post-login routing is role-aware:
+     *   - administrators -> /admin/dashboard
+     *   - regular users   -> / (home)
+     *
+     * The previous behaviour sent every user to `route('dashboard')`, which is
+     * the admin-only `/admin/dashboard` endpoint. Non-admin users therefore
+     * landed on a 403 page immediately after logging in.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -28,7 +36,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->homeFor($request->user()));
+    }
+
+    /**
+     * Resolve the landing page for an authenticated user.
+     */
+    private function homeFor(?\App\Models\User $user): string
+    {
+        return ($user && $user->is_admin)
+            ? route('dashboard', absolute: false)
+            : route('home', absolute: false);
     }
 
     /**

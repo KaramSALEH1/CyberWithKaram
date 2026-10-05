@@ -5,11 +5,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\{
     AcademyController,
+    ContactController,
     AdminController,
     Admin\CommandCenterController,
     Admin\CourseController as AdminCourseController,
     Admin\PaymentController as AdminPaymentController,
     Admin\ServiceController,
+    Admin\SubscriptionController,
     PaymentController,
     ProfileController,
     UserToolController,
@@ -28,7 +30,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/about', fn() => view('about'))->name('about');
-Route::get('/contact', fn() => view('contact'))->name('contact');
+Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.submit');
 
 Route::get('/services', function () {
     $services = Schema::hasTable('services')
@@ -109,6 +112,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(functio
     Route::get('/payments/{payment}', [AdminPaymentController::class, 'show'])->name('admin.payments.show');
     Route::post('/payments/{payment}/approve', [AdminPaymentController::class, 'approve'])->name('admin.payments.approve');
     Route::post('/payments/{payment}/reject', [AdminPaymentController::class, 'reject'])->name('admin.payments.reject');
+
+    // Subscriptions & active-users analytics report
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('admin.subscriptions.index');
 
     Route::prefix('academy')->group(function () {
         Route::get('/', [AcademyController::class, 'index'])->name('admin.academy.index');

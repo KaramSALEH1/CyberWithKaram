@@ -12,22 +12,53 @@ class TelegramService
 {
     public function isConfigured(): bool
     {
-        return filled(config('telegram.bot_token')) && filled(config('telegram.chat_id'));
+        return filled(config('telegram.bot_token')) && filled($this->targetChatId());
+    }
+
+    /**
+     * Resolve the configured destination chat id.
+     *
+     * Returns null when unset or malformed. There is intentionally no fallback
+     * to any legacy/hardcoded chat: notifications are disabled instead of being
+     * delivered to an unintended destination.
+     */
+    public function targetChatId(): ?string
+    {
+        $chatId = config('telegram.chat_id');
+
+        if (blank($chatId)) {
+            return null;
+        }
+
+        $chatId = trim((string) $chatId);
+
+        // Telegram ids are numeric; groups/supersgroups start with -100.
+        if (! preg_match('/^-?\d+$/', $chatId)) {
+            Log::warning('TELEGRAM_CHAT_ID is not numeric - notifications disabled.', [
+                'configured_label' => config('telegram.chat_label'),
+            ]);
+
+            return null;
+        }
+
+        return $chatId;
     }
 
     public function sendMessage(string $message): bool
     {
-        if (! $this->isConfigured()) {
+        $chatId = $this->targetChatId();
+
+        if (! $this->isConfigured() || $chatId === null) {
             Log::info('Telegram notification skipped (not configured).', ['message' => $message]);
 
             return false;
         }
 
         try {
-            $response = Http::timeout(10)->post(
+            $response = Http::timeout((int) config('telegram.timeout', 10))->post(
                 'https://api.telegram.org/bot'.config('telegram.bot_token').'/sendMessage',
                 [
-                    'chat_id' => config('telegram.chat_id'),
+                    'chat_id' => $chatId,
                     'text' => $message,
                     'parse_mode' => 'HTML',
                     'disable_web_page_preview' => true,

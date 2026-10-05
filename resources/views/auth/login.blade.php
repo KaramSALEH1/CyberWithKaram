@@ -44,4 +44,17 @@
             </x-primary-button>
         </div>
     </form>
+
+    <!-- Registration CTA -->
+    @if (Route::has('register'))
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600">
+                {{ __("Don't have an account?") }}
+                <a href="{{ route('register') }}"
+                    class="ms-1 font-bold text-karam-green hover:underline underline-offset-4 transition-colors">
+                    {{ __('Register') }}
+                </a>
+            </p>
+        </div>
+    @endif
 </x-guest-layout>

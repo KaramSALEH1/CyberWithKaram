@@ -303,6 +303,175 @@ public function test_full_description_sanitizer_strips_tags_and_attributes(): vo
         $this->assertStringNotContainsString('javascript:', $html);
     }
 
+    public function test_contact_form_validates_and_accepts_an_enquiry(): void
+    {
+        // The page renders with a real, wired form.
+        $page = $this->get(route('contact'));
+        $page->assertOk();
+        $page->assertSee('Send an enquiry');
+        $page->assertSee(route('contact.submit'), false);
+
+        // Missing fields are rejected.
+        $this->post(route('contact.submit'), [])
+            ->assertSessionHasErrors(['name', 'email', 'subject', 'message']);
+
+        // Invalid email is rejected.
+        $this->post(route('contact.submit'), [
+            'name' => 'Jane',
+            'email' => 'not-an-email',
+            'subject' => 'Hello',
+            'message' => 'Testing.',
+        ])->assertSessionHasErrors('email');
+
+        // A valid enquiry is accepted and redirected back with a flash message.
+        $response = $this->post(route('contact.submit'), [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+            'subject' => 'Enterprise licensing',
+            'message' => 'We would like to deploy 25 EDR agents.',
+        ]);
+
+        $response->assertRedirect(route('contact'));
+        $response->assertSessionHas('status');
+        $this->assertGuest();
+    }
+
+    public function test_about_page_shows_cyberlogia_branding(): void
+    {
+        $this->get(route('about'))
+            ->assertOk()
+            ->assertSee('CyberLogia')
+            ->assertSee('Blue Team')
+            ->assertSee('Red Team')
+            ->assertSee('Cloud Security');
+    }
+
+    public function test_services_page_exposes_category_filters(): void
+    {
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+
+        $page = $this->get(route('services'));
+        $page->assertOk();
+
+        // Branded headline replaces the old "The Arsenal" wording.
+        $page->assertSee('Cybersecurity Services Matrix');
+        $page->assertDontSee('The <span class="text-transparent', false);
+
+        // Every category is offered as a filter control.
+        $page->assertSee('All', false);
+        $page->assertSee('activeCategory', false);   // Alpine filter state
+        $page->assertSee('matches(', false);          // Alpine filter predicate
+    }
+
+    public function test_admin_subscriptions_report_renders_and_is_admin_only(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $customer = User::factory()->create(['email' => 'subscriber@example.com']);
+
+        $service = Service::create([
+            'title' => 'Automated EDR & Threat Hunting Agent',
+            'slug' => 'report-edr',
+            'category' => 'Blue Team',
+            'description' => 'Test',
+            'icon' => '🛡️',
+            'price' => 80000,
+            'is_automated' => true,
+            'is_available' => true,
+        ]);
+
+        Payment::create([
+            'user_id' => $customer->id,
+            'service_id' => $service->id,
+            'product_type' => 'service',
+            'amount' => 80000,
+            'status' => 'approved',
+            'license_key' => 'CWK-REPORT-0001',
+            'approved_at' => now()->subDays(20),
+            'expires_at' => now()->addDays(10),
+        ]);
+
+        Payment::create([
+            'user_id' => $customer->id,
+            'service_id' => $service->id,
+            'product_type' => 'service',
+            'amount' => 80000,
+            'status' => 'pending',
+        ]);
+
+        Payment::create([
+            'user_id' => $customer->id,
+            'service_id' => $service->id,
+            'product_type' => 'service',
+            'amount' => 80000,
+            'status' => 'approved',
+            'license_key' => 'CWK-REPORT-EXPIRED',
+            'approved_at' => now()->subDays(60),
+            'expires_at' => now()->subDays(5),
+        ]);
+
+        // Guests and non-admins are rejected.
+        $this->get(route('admin.subscriptions.index'))->assertRedirect(route('login'));
+        $this->actingAs($customer)->get(route('admin.subscriptions.index'))->assertForbidden();
+
+        // Admin sees the report with licence keys and status badges.
+        $response = $this->actingAs($admin)->get(route('admin.subscriptions.index'));
+        $response->assertOk();
+        $response->assertSee('Subscriptions');
+        $response->assertSee('subscriber@example.com');
+        $response->assertSee('CWK-REPORT-0001');
+        $response->assertSee('Active');
+        $response->assertSee('Pending Approval');
+        $response->assertSee('Expired');
+
+        // Sidebar link is present on the admin layout.
+        $response->assertSee(route('admin.subscriptions.index'));
+    }
+
+    public function test_admin_subscriptions_report_filters_and_searches(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $a = User::factory()->create(['email' => 'alpha@example.com']);
+        $b = User::factory()->create(['email' => 'beta@example.com']);
+
+        $service = Service::create([
+            'title' => 'FIM Agent', 'slug' => 'report-fim', 'category' => 'Blue Team',
+            'description' => 'Test', 'icon' => '🔗', 'price' => 40000, 'is_available' => true,
+        ]);
+
+        Payment::create([
+            'user_id' => $a->id, 'service_id' => $service->id, 'product_type' => 'service',
+            'amount' => 40000, 'status' => 'approved', 'license_key' => 'CWK-ALPHA-KEY',
+            'approved_at' => now(), 'expires_at' => now()->addDays(20),
+        ]);
+        Payment::create([
+            'user_id' => $b->id, 'service_id' => $service->id, 'product_type' => 'service',
+            'amount' => 40000, 'status' => 'pending',
+        ]);
+
+        // Filter by status = pending only returns the pending row.
+        $pending = $this->actingAs($admin)->get(route('admin.subscriptions.index', ['status' => 'pending']));
+        $pending->assertOk();
+        $pending->assertSee('beta@example.com');
+        $pending->assertDontSee('alpha@example.com');
+
+        // Filter by status = active returns the approved row.
+        $active = $this->actingAs($admin)->get(route('admin.subscriptions.index', ['status' => 'active']));
+        $active->assertOk();
+        $active->assertSee('alpha@example.com');
+        $active->assertDontSee('beta@example.com');
+
+        // Search by email.
+        $search = $this->actingAs($admin)->get(route('admin.subscriptions.index', ['q' => 'alpha@']));
+        $search->assertOk();
+        $search->assertSee('alpha@example.com');
+        $search->assertDontSee('beta@example.com');
+
+        // Search by licence key.
+        $licence = $this->actingAs($admin)->get(route('admin.subscriptions.index', ['q' => 'CWK-ALPHA-KEY']));
+        $licence->assertOk();
+        $licence->assertSee('alpha@example.com');
+    }
+
     public function test_admin_can_approve_payment_and_issue_license(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

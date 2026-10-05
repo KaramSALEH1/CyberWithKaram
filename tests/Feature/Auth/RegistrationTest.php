@@ -25,7 +25,20 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // Registration must NOT log the user in automatically.
+        $this->assertGuest();
+
+        // It must land on the login screen with a confirmation flash message.
+        $response->assertRedirect(route('login', absolute: false));
+        $response->assertSessionHas('status', 'Registration successful! Please log in.');
+
+        $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
+    }
+
+    public function test_registration_screen_links_to_login(): void
+    {
+        $this->get('/register')
+            ->assertOk()
+            ->assertSee(route('login', absolute: false));
     }
 }
