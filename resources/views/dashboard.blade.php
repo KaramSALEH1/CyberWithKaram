@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-8">
     <div>
-        <h1 class="text-3xl font-black">CyberWithKaram <span class="text-karam-green">Command Center</span></h1>
+        <h1 class="text-3xl font-black">CyberLogia <span class="text-karam-green">Command Center</span></h1>
         <p class="text-gray-400 text-sm mt-1">Centralized control for services, payments, academy, and agents.</p>
     </div>
 

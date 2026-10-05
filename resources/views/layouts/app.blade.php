@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>KARAM Security | @yield('title', 'Secure Today')</title>
+    <title>CyberLogia | @yield('title', 'Secure Today')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -27,8 +27,8 @@
     <nav class="p-6 border-b border-gray-800 sticky top-0 bg-gray-900/80 backdrop-blur-md z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <a href="{{ route('home') }}" class="flex items-center gap-3">
-                <img src="{{ asset('images/logo.png') }}" alt="KARAM Logo" class="h-10">
-                <span class="text-2xl font-bold tracking-tighter text-karam-green">KARAM</span>
+                <img src="{{ asset('images/logo.png') }}" alt="CyberLogia Logo" class="h-10">
+                <span class="text-2xl font-bold tracking-tighter text-karam-green">CyberLogia</span>
             </a>
             <div class="hidden md:flex space-x-8 items-center text-sm font-medium">
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Home</a>
@@ -59,7 +59,7 @@
 
     <footer class="py-12 border-t border-gray-800 bg-gray-900">
         <div class="max-w-7xl mx-auto px-6 text-center">
-            <p class="text-gray-500 text-sm mb-4">© 2026 KARAM Security. All rights reserved.</p>
+            <p class="text-gray-500 text-sm mb-4">© 2026 CyberLogia. All rights reserved.</p>
             <div class="flex justify-center space-x-6 text-gray-400">
                 <a href="https://instagram.com/k_cs0" class="hover:text-karam-green">Instagram</a>
                 <a href="#" class="hover:text-karam-green">LinkedIn</a>

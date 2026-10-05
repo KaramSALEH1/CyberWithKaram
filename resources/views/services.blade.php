@@ -12,6 +12,39 @@
                     Professional-grade cybersecurity tools and defensive assets.
                     Equip your infrastructure with elite-level protection.
                 </p>
+
+                @php
+                    $categories = collect($services)->pluck('category')->filter()->unique();
+                    $categoryStyles = [
+                        'Blue Team' => 'border-blue-400/30 text-blue-300',
+                        'Red Team' => 'border-red-400/30 text-red-300',
+                        'Cloud Security' => 'border-sky-400/30 text-sky-300',
+                    ];
+                @endphp
+
+                @if ($categories->isNotEmpty())
+                    <div class="flex flex-wrap items-center justify-center gap-3 mt-10">
+                        <span class="text-[10px] font-mono text-gray-600 uppercase tracking-[0.2em]">Filter:</span>
+                        @foreach ($categories as $category)
+                            <span
+                                class="inline-flex items-center border {{ $categoryStyles[$category] ?? 'border-cyan-400/30 text-cyan-300' }} bg-white/[0.03] px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest">
+                                {{ $category }}
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="flex flex-wrap items-center justify-center gap-3 mt-8">
+                    <span
+                        class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest">
+                        <span class="relative flex h-1.5 w-1.5">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                        </span>
+                        Every service ships as a self-installing automated agent
+                    </span>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,21 +89,52 @@
                                 @endif
                             </div>
 
-                            <p class="text-[10px] font-mono text-cyan-500 uppercase tracking-[0.2em] mb-2">
-                                {{ $service->category }}</p>
-                            <h2
-                                class="text-2xl font-mono font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors">
-                                {{ $service->title }}</h2>
-                            <p class="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-3">{{ $service->description }}
-                            </p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                    @php
+                                        $categoryStyles = [
+                                            'Blue Team' => 'bg-blue-500/10 border-blue-400/30 text-blue-300',
+                                            'Red Team' => 'bg-red-500/10 border-red-400/30 text-red-300',
+                                            'Cloud Security' => 'bg-sky-500/10 border-sky-400/30 text-sky-300',
+                                        ];
+                                        $badgeStyle = $categoryStyles[$service->category] ?? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
+                                    @endphp
+                                    <span
+                                        class="inline-flex items-center gap-1.5 border {{ $badgeStyle }} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                        {{ $service->category }}
+                                    </span>
+
+                                    @if ($service->is_automated)
+                                        <span
+                                            class="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                            <span class="relative flex h-1.5 w-1.5">
+                                                <span
+                                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span
+                                                    class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                                            </span>
+                                            Automated Agent Service
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <h2
+                                    class="text-2xl font-mono font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors">
+                                    {{ $service->title }}</h2>
+                                <p class="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-3">{{ $service->description }}
+                                </p>
                         </div>
 
                         <div class="mt-auto relative z-10">
-                            <div class="flex items-baseline gap-2 mb-6">
+                            <div class="flex items-baseline gap-2 flex-wrap mb-6">
                                 @if ($service->requiresPayment())
                                     <span
                                         class="text-2xl font-mono font-bold text-white">{{ number_format((float) $service->price, 0) }}</span>
                                     <span class="text-xs font-medium text-gray-500 uppercase">SYP</span>
+                                    <span class="text-[10px] font-mono text-gray-600">|</span>
+                                    <span
+                                        class="text-sm font-mono font-semibold text-cyan-400">${{ number_format($service->usdPrice(), 0) }}</span>
+                                    <span class="text-[10px] font-medium text-gray-500 uppercase">USD / mo</span>
                                 @else
                                     <span class="text-lg font-mono font-bold text-gray-400 italic">Custom Quote</span>
                                 @endif

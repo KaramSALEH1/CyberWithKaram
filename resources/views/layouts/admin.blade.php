@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Admin') | CyberWithKaram</title>
+    <title>@yield('title', 'Admin') | CyberLogia</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -15,7 +15,7 @@
 <body class="bg-gray-950 text-white min-h-screen">
     <div class="flex min-h-screen">
         <aside class="w-64 bg-gray-900 border-r border-gray-800 p-6 hidden lg:block">
-            <a href="{{ route('dashboard') }}" class="text-xl font-black text-karam-green block mb-8">CYBER COMMAND</a>
+            <a href="{{ route('dashboard') }}" class="text-xl font-black text-karam-green block mb-8">CYBERLOGIA COMMAND</a>
             <nav class="space-y-2 text-sm">
                 <a href="{{ route('dashboard') }}" class="block px-4 py-3 rounded-lg {{ request()->routeIs('dashboard') ? 'bg-karam-green/20 text-karam-green border border-karam-green/40' : 'bg-gray-800 border border-gray-700 hover:border-karam-green' }}">Dashboard</a>
                 <a href="{{ route('admin.services.index') }}" class="block px-4 py-3 rounded-lg {{ request()->routeIs('admin.services.*') ? 'bg-karam-green/20 text-karam-green border border-karam-green/40' : 'bg-gray-800 border border-gray-700 hover:border-karam-green' }}">Services</a>

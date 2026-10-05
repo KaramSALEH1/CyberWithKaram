@@ -19,7 +19,15 @@
     }">
         <div class="bg-[#0a0a0a] border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] rounded-2xl p-8">
             <h1 class="text-3xl font-black mb-2 text-white">{{ $product->title }}</h1>
-            <p class="text-cyan-400 text-2xl font-bold mb-6">{{ number_format((float) $product->price, 0) }} SYP</p>
+            <div class="flex flex-wrap items-baseline gap-3 mb-6">
+                <span class="text-cyan-400 text-2xl font-bold">{{ number_format((float) $product->price, 0) }} SYP</span>
+                @if ((float) $product->price > 0)
+                    <span class="text-[10px] font-mono text-gray-600">|</span>
+                    <span class="text-sm font-mono font-semibold text-gray-300">
+                        ${{ number_format((float) $product->price / (float) config('cyberlogia.syp_per_usd', 10000), 0) }} USD equivalent / month
+                    </span>
+                @endif
+            </div>
 
             @if (session('success'))
                 <div class="mb-4 rounded-lg border border-green-700 bg-green-900/20 p-4 text-green-300">
@@ -43,7 +51,11 @@
                         <p class="text-sm text-gray-300 mt-1">Your license key:</p>
                         <p class="font-mono text-lg mt-2 text-cyan-300">{{ $approvedPayment->license_key }}</p>
                         <p class="text-xs text-gray-400 mt-3">Deploy your agent instantly:</p>
-                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-3 rounded-lg text-[10px] text-green-400 font-mono break-all">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent.py && python3 agent.py</code>
+                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-3 rounded-lg text-[10px] text-green-400 font-mono break-all">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent_bootstrapper.py &amp;&amp; python3 agent_bootstrapper.py</code>
+                        <p class="text-xs text-gray-400 mt-3">
+                            Valid until <span class="font-mono text-cyan-300">{{ $approvedPayment->expires_at?->format('Y-m-d H:i') }} UTC</span>
+                            ({{ $approvedPayment->expires_at?->diffForHumans() }} left).
+                        </p>
                         <a href="{{ route('my-tools.index') }}" class="inline-block mt-4 text-cyan-400 text-sm hover:underline">View full deployment commands →</a>
                     @else
                         <p class="text-sm text-gray-300 mt-1">
@@ -277,11 +289,18 @@
                                 </span>
                             </div>
 
-                            <!-- Mock Global Payment Button -->
-                            <button @click="mockGlobalPaymentSuccess()"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition duration-300 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
-                                Pay Securely Now
-                            </button>
+                            <!-- Mock Global Payment Button (local/testing only) -->
+                            @if (! app()->environment('production'))
+                                <button @click="mockGlobalPaymentSuccess()"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition duration-300 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+                                    Pay Securely Now (DEV ONLY)
+                                </button>
+                            @else
+                                <div class="w-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 py-3 px-4 rounded-lg text-sm text-center">
+                                    This item requires manual bank-transfer verification. Submit your
+                                    receipt above and our team will activate your license within 24 hours.
+                                </div>
+                            @endif
                         </div>
                     @endif
                 @endguest

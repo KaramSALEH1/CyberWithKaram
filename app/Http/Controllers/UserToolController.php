@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\Service;
 use App\Services\Payment\PaymentVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -29,6 +30,18 @@ class UserToolController extends Controller
         return view('my-tools', compact('payments', 'sanctumToken', 'baseUrl'));
     }
 
+    /**
+     * Download the CyberLogia agent bootstrapper for an approved service.
+     *
+     * The generated `agent_bootstrapper.py` is tailored to the requested
+     * `service_id` and `license_key` and runs identically on Linux and Windows:
+     *
+     *   1. Dependency verification  - stdlib check + auto-install of `requests`
+     *   2. License check & fetch    - GET /api/fetch-script (Sanctum Bearer auth)
+     *   3. Safe execution           - payload errors never kill the agent loop
+     *   4. Expiry / cancellation    - HTTP 403 terminates with renewal guidance
+     *   5. Heartbeat loop           - POST /api/heartbeat every 60 seconds
+     */
     public function downloadAgent(Request $request, int $service_id, string $license_key, PaymentVerificationService $verificationService)
     {
         $user = $request->user();
@@ -40,81 +53,71 @@ class UserToolController extends Controller
 
         $sanctumToken = $user->createToken('agent-bootstrapper')->plainTextToken;
         $baseUrl = rtrim(config('app.url'), '/');
+        $service = Service::find($service_id);
 
-        $agentTemplate = <<<PYTHON
-#!/usr/bin/env python3
-"""
-KARAM Security Agent — Cross-Platform Bootstrapper
-Phases: 1) Environment Setup  2) Code Fetch  3) Execution
-Requires: Python 3.8+ and `pip install requests`
-"""
-import os
-import sys
-import time
+        $agentTemplate = $this->buildAgentBootstrapper(
+            baseUrl: $baseUrl,
+            sanctumToken: $sanctumToken,
+            serviceId: $service_id,
+            licenseKey: $license_key,
+            serviceTitle: $service?->title ?? 'CyberLogia Automated Service',
+            serviceCategory: $service?->category ?? 'Security',
+            expiresAt: $payment?->expires_at?->toIso8601String(),
+        );
 
-try:
-    import requests
-except ImportError:
-    print("[!] Installing requests...")
-    os.system(f"{sys.executable} -m pip install requests")
-    import requests
-
-BASE_URL = "{$baseUrl}"
-SANCTUM_TOKEN = "{$sanctumToken}"
-SERVICE_ID = {$service_id}
-LICENSE_KEY = "{$license_key}"
-
-FETCH_SCRIPT_ENDPOINT = f"{BASE_URL}/api/fetch-script"
-HEARTBEAT_ENDPOINT = f"{BASE_URL}/api/heartbeat"
-TOKEN_ENDPOINT = f"{BASE_URL}/api/agent/token"
-
-def phase_setup():
-    print("[Phase 1] Verifying environment...")
-    print(f"  Python: {sys.version.split()[0]} | Platform: {sys.platform}")
-    return True
-
-def phase_fetch():
-    print("[Phase 2] Fetching deployment payload...")
-    headers = {"Authorization": f"Bearer {SANCTUM_TOKEN}", "Accept": "application/json"}
-    params = {"service_id": SERVICE_ID, "license_key": LICENSE_KEY}
-    response = requests.get(FETCH_SCRIPT_ENDPOINT, headers=headers, params=params, timeout=30)
-    if response.status_code != 200:
-        print(f"[-] Fetch failed: {response.status_code} — {response.json().get('message', '')}")
-        return None
-    return response.json().get("script_code")
-
-def phase_execute(payload):
-    print("[Phase 3] Executing workload...")
-    exec(payload, {"__name__": "__main__"})
-    return True
-
-def send_heartbeat():
-    headers = {"Authorization": f"Bearer {SANCTUM_TOKEN}", "Accept": "application/json"}
-    try:
-        requests.post(HEARTBEAT_ENDPOINT, headers=headers, json={"service_id": SERVICE_ID}, timeout=5)
-    except Exception:
-        pass
-
-def main():
-    print("--- KARAM SECURITY AGENT ---")
-    if not phase_setup():
-        sys.exit(1)
-    payload = phase_fetch()
-    if not payload:
-        sys.exit(1)
-    send_heartbeat()
-    if phase_execute(payload):
-        print("[+] Agent running. Heartbeat every 60s.")
-        while True:
-            send_heartbeat()
-            time.sleep(60)
-
-if __name__ == "__main__":
-    main()
-PYTHON;
+        $filename = 'agent_bootstrapper.py';
 
         return Response::streamDownload(function () use ($agentTemplate) {
             echo $agentTemplate;
-        }, 'agent_bootstrapper.py', ['Content-Type' => 'text/x-python']);
+        }, $filename, [
+            'Content-Type' => 'text/x-python; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'X-CyberLogia-Service' => $service?->title ?? 'CyberLogia Automated Service',
+            // The generated file embeds a Sanctum token and licence key.
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Render the cross-platform agent bootstrapper for one licensed service.
+     *
+     * The template lives in stubs/agent_bootstrapper.py. Values are injected with
+     * `strtr()` against unique placeholders, so the Python source is never
+     * re-interpreted by PHP (no interpolation issues with `$`, `{}` or escapes).
+     */
+    private function buildAgentBootstrapper(
+        string $baseUrl,
+        string $sanctumToken,
+        int $serviceId,
+        string $licenseKey,
+        string $serviceTitle,
+        string $serviceCategory,
+        ?string $expiresAt,
+    ): string {
+        $template = file_get_contents(base_path('stubs/agent_bootstrapper.py'));
+
+        if ($template === false) {
+            $template = "#!/usr/bin/env python3\nprint('CyberLogia agent bootstrapper is unavailable.')\n";
+        }
+
+        return strtr($template, [
+            '@BASE_URL@' => $baseUrl,
+            '@SANCTUM_TOKEN@' => $sanctumToken,
+            '@SERVICE_ID@' => (string) $serviceId,
+            '@LICENSE_KEY@' => $this->escapePython($licenseKey),
+            '@SERVICE_TITLE@' => $this->escapePython($serviceTitle),
+            '@SERVICE_CATEGORY@' => $this->escapePython($serviceCategory),
+            '@LICENSE_EXPIRES_AT@' => (string) $expiresAt,
+        ]);
+    }
+
+    /**
+     * Escape a value so it is safe to embed in a double-quoted Python string.
+     */
+    private function escapePython(string $value): string
+    {
+        return addcslashes($value, "\\\"'\n\r\t");
     }
 }

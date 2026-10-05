@@ -5,7 +5,7 @@
     <section class="py-24 px-6 max-w-5xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-                <h1 class="text-5xl font-black mb-6">About <span class="text-karam-green">KARAM</span></h1>
+                <h1 class="text-5xl font-black mb-6">About <span class="text-karam-green">CyberLogia</span></h1>
                 <p class="text-gray-400 text-xl leading-relaxed mb-6">
                     I am a dedicated **Cybersecurity Professional** and Business Owner, specializing in Penetration Testing
                     and Vulnerability Assessments.

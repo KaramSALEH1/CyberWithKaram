@@ -88,10 +88,18 @@ class AgentApiController extends Controller
             return response()->json(['message' => 'No script configured for this service.'], 404);
         }
 
+        // The licence key travels as a query parameter, so it can appear in web
+        // server / proxy access logs. Never let a shared cache or browser store
+        // the response, and keep it out of referrer chains.
         return response()->json([
             'service_id' => $service->id,
             'service_slug' => $service->slug,
             'script_code' => $service->script_code,
+        ])->withHeaders([
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
+            'Pragma' => 'no-cache',
+            'Referrer-Policy' => 'no-referrer',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

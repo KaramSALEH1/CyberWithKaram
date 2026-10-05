@@ -11,7 +11,7 @@
             Protect Your Digital Infrastructure With <span class="text-karam-green">Trust</span>
         </h1>
         <p class="text-gray-400 text-xl mb-10 leading-relaxed">
-            Professional Penetration Testing, Cloud Defense, and Automated Security Solutions by KARAM.
+            Professional Penetration Testing, Cloud Defense, and Automated Security Solutions by CyberLogia.
         </p>
         <div class="flex flex-col md:flex-row justify-center gap-4">
             <a href="{{ route('services') }}"

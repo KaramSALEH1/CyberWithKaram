@@ -4,6 +4,7 @@ namespace App\Services\Telegram;
 
 use App\Models\AgentStatus;
 use App\Models\Payment;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -22,15 +23,23 @@ class TelegramService
             return false;
         }
 
-        $response = Http::timeout(10)->post(
-            'https://api.telegram.org/bot'.config('telegram.bot_token').'/sendMessage',
-            [
-                'chat_id' => config('telegram.chat_id'),
-                'text' => $message,
-                'parse_mode' => 'HTML',
-                'disable_web_page_preview' => true,
-            ]
-        );
+        try {
+            $response = Http::timeout(10)->post(
+                'https://api.telegram.org/bot'.config('telegram.bot_token').'/sendMessage',
+                [
+                    'chat_id' => config('telegram.chat_id'),
+                    'text' => $message,
+                    'parse_mode' => 'HTML',
+                    'disable_web_page_preview' => true,
+                ]
+            );
+        } catch (ConnectionException $exception) {
+            // Notifications are best-effort: never let a network/DNS failure
+            // break payment approval, agent registration or any core flow.
+            Log::warning('Telegram API unreachable.', ['error' => $exception->getMessage()]);
+
+            return false;
+        }
 
         if (! $response->successful()) {
             Log::warning('Telegram API request failed.', [

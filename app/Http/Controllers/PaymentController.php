@@ -138,8 +138,17 @@ class PaymentController extends Controller
             ->with('success', 'Payment details submitted successfully. Awaiting admin verification.');
     }
 
-    public function mockGlobalPaymentSuccess($type, $slug, PaymentVerificationService $verificationService)
+    /**
+ * Local development helper: instantly approve a payment without verification.
+ *
+ * SECURITY: this self-approves a payment and therefore mints a real license
+ * key. It is gated to non-production environments so it can never be used to
+ * obtain free services on a live site.
+ */
+public function mockGlobalPaymentSuccess($type, $slug, PaymentVerificationService $verificationService)
     {
+        abort_if(app()->environment('production'), 404);
+
         if (! Auth::check()) {
             return redirect()->route('login')->with('error', 'Please login to complete the purchase.');
         }

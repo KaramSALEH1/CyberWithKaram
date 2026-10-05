@@ -58,7 +58,7 @@ class CommandCenterAndAgentFlowTest extends TestCase
     {
         $admin = User::factory()->create(['is_admin' => true]);
 
-        $registerResponse = $this->postJson('/api/v1/agent/register', [
+        $registerResponse = $this->actingAs($admin)->postJson('/api/v1/agent/register', [
             'user_id' => $admin->id,
             'agent_key' => 'agent-flow-key',
             'device_name' => 'Endpoint-A',

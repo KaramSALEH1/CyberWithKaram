@@ -1,17 +1,20 @@
-# CyberWithKaram — Complete Project Description
+# CyberLogia — Complete Project Description
 
 > **Purpose of this document:** A single, self-contained description of the entire project, detailed enough for a human to read or for an AI agent to understand the whole codebase **without needing to scan the source files**.
 >
-> **Repository:** `https://github.com/KaramSALEH1/CyberWithKaram.git` · **Branch:** `main` · **Latest commit:** `8fc0e27` ("PROJECT COMPLETE, 1st")
-> **Working tree:** `c:\Users\Karam\Documents\CyberWithKaram`
+> **Repository:** `https://github.com/KaramSALEH1/CyberWithKaram.git` · **Branch:** `main`
+>
+> ⚠️ **Branding note:** the platform was formerly named *CyberWithKaram*. All user-facing
+> branding (views, layouts, page titles, seeders, generated agents) now uses **CyberLogia**.
+> The repository/working-tree paths still carry the old name.
 
 ---
 
 ## 1. What This Project Is
 
-**CyberWithKaram** is a **cybersecurity-services SaaS platform** built with **Laravel 12 (PHP 8.2+)**. It sells three product lines from one website:
+**CyberLogia** is a **cybersecurity-services SaaS marketplace** built with **Laravel 12 (PHP 8.2+)**. It sells three product lines from one website:
 
-1. **Security Services marketplace** — VAPT, SOC, Cloud, and Consultation services (e.g. "Web App Pentesting", "SIEM Deployment", "Kubernetes Security").
+1. **Automated Security Agents Marketplace** — 10 production-grade, fully automated agent services across three categories: **Blue Team** (EDR & threat hunting, CIS hardening, log collector/SIEM forwarder, FIM), **Red Team** (ransomware/breach simulation, internal vulnerability scanner, local app misconfiguration audit) and **Cloud Security** (cloud sandbox & email attachment auditor, cloud asset CIS benchmarking, Kubernetes & Docker auditor). Every service ships as a self-installing Python agent.
 2. **"Academy"** — a course platform (Courses → Modules → Lessons) with video content (YouTube or self-hosted uploads) and per-course/module/lesson paid access.
 3. **Remote Agent / Command Center** — a fleet-management system for Python "agents" running on client machines. Admins queue signed commands; agents poll for them and return results. The platform also pushes executable Python `script_code` to licensed agents.
 
@@ -21,7 +24,38 @@
 
 ---
 
-## 2. Technology Stack
+## 2. The CyberLogia Service Catalog (10 automated agents)
+
+`database/seeders/DatabaseSeeder.php` clears `services` (FK-safe via
+`Schema::disableForeignKeyConstraints()`) and seeds exactly **10** automated agent
+services. Each row carries a short `description`, an HTML `full_description`
+(sanitized on write — see §13), `payment_instructions` (SYP + USD), an `icon`, a
+monthly `price`, and a working, benign `script_code` payload.
+
+| # | Service (`slug`) | Category | Price (SYP) | ≈USD/mo | Icon | Payload behaviour |
+|---|---|---|---|---|---|---|
+| 1 | Automated EDR & Threat Hunting Agent (`automated-edr-threat-hunting-agent`) | Blue Team | 80,000 | $8 | 🛡️ | Process inventory, listening sockets, persistence entries, LOLBin heuristic hunting |
+| 2 | System Hardening & CIS Compliance Check (`system-hardening-cis-compliance-check`) | Blue Team | 50,000 | $5 | 🔐 | PASS/FAIL scorecard: firewall, guest account, SMB signing, RDP/SSH, audit logging, password policy |
+| 3 | Automated Log Collector & SIEM Forwarder Agent (`automated-log-collector-siem-forwarder-agent`) | Blue Team | 60,000 | $6 | 📊 | Discovers log sources, tails **new** bytes via an offset cursor, classifies severity, forwards to a SIEM |
+| 4 | File Integrity Monitoring (FIM) Agent (`file-integrity-monitoring-fim-agent`) | Blue Team | 40,000 | $4 | 🔗 | SHA-256 baseline of critical paths; reports ADDED / MODIFIED / DELETED |
+| 5 | Continuous Ransomware & Breach Simulation Agent (`continuous-ransomware-breach-simulation-agent`) | Red Team | 100,000 | $10 | 🚨 | **Non-destructive.** Backup/snapshot validation, exposure scoring, detection readiness. Never encrypts client data; sandbox is temp-only and self-deleted |
+| 6 | Automated Internal Network Vulnerability Scanner (`automated-internal-network-vulnerability-scanner`) | Red Team | 250,000 | $25 | 📡 | TCP-**connect-only** host discovery + service fingerprinting. Refuses non-RFC1918 ranges; no exploitation |
+| 7 | Local Application Vulnerability & Misconfig Agent (`local-application-vulnerability-misconfig-agent`) | Red Team | 70,000 | $7 | 🎯 | Read-only **static** analysis: hardcoded secrets, debug flags, weak crypto, CORS, world-writable files |
+| 8 | Virtual Cloud Sandbox & Email Attachment Auditor (`virtual-cloud-sandbox-email-attachment-auditor`) | Cloud Security | 350,000 | $35 | 📨 | Magic-byte type verification, SHA-256, archive listing (**never extracted**), malware heuristic scoring |
+| 9 | Automated Cloud Asset & CIS Benchmarking Agent (`automated-cloud-asset-cis-benchmarking-agent`) | Cloud Security | 200,000 | $20 | ☁️ | Inventories AWS/Azure/GCP config + CLIs; benchmarks 8 CIS Cloud Foundations controls. No mutating API calls |
+| 10 | Automated Kubernetes & Docker Security Auditor Agent (`automated-kubernetes-docker-security-auditor-agent`) | Cloud Security | 150,000 | $15 | ☸️ | Read-only `docker ps`/`docker inspect` + kubeconfig audit: privileged, host namespaces, root, missing limits, TLS skip |
+
+**Safety invariant:** every seeded payload is strictly diagnostic/read-only. The
+only file writes are the FIM agent's own baseline (`~/.cyberlogia/fim-baseline.json`)
+and the ransomware simulator's `tempfile.mkdtemp()` sandbox, which is removed in a
+`finally` block. All 10 were verified to execute cleanly (exit code 0) on Windows.
+
+Pricing is derived for display via `Service::usdPrice()` / `Service::priceLabel()`,
+which divide `price` by `config('cyberlogia.syp_per_usd')` (default `10000`).
+
+---
+
+## 3. Technology Stack
 
 | Layer | Technology |
 |---|---|
@@ -29,12 +63,13 @@
 | Auth (web) | Laravel Breeze (`^2.4`, dev dep) — Blade + Alpine.js session auth, email verification |
 | Auth (API) | Laravel Sanctum (`^4.3`) — personal access tokens for Python agents |
 | Database | **SQLite** (`database/database.sqlite`); sessions/cache/queues on `database` driver |
-| Frontend | Blade, **Tailwind CSS 3** (`@tailwindcss/forms`, custom `karam-green: #00f260`, Figtree font), **Alpine.js 3**, **Vite 7** (`laravel-vite-plugin`), Axios |
+| Frontend | Blade, **Tailwind CSS 3** (`@tailwindcss/forms`, custom `karam-green: #008751`, Figtree font), **Alpine.js 3**, **Vite 7** (`laravel-vite-plugin`), Axios |
 | Queue | `database` queue driver; workers via `php artisan queue:listen` |
 | Tests | PHPUnit `^11.5.50` (in-memory SQLite, `QUEUE_CONNECTION=sync`) |
-| Python agent | Standalone scripts depending only on `requests` |
+| Python agent | Generated `agent_bootstrapper.py` (needs `requests`; auto-installed). Seeded service payloads use **only the standard library** |
 | Other | Laravel Pint, Pail, Sail, Tinker, Faker, Mockery, Collision, `concurrently` |
-| Notifications | Telegram Bot API via `Http` facade (`config/telegram.php` ← `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) |
+| Notifications | Telegram Bot API via `Http` facade (`config/telegram.php` ← `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`). Failures are caught and logged — they never break a core flow |
+| Marketplace config | `config/cyberlogia.php` — `brand`, `syp_per_usd` (SYP→USD nominal rate), `agent_heartbeat_interval` |
 
 **Composer scripts:**
 - `composer setup` — install, copy `.env`, `key:generate`, `migrate --force`, `npm install`, `npm run build`
@@ -47,17 +82,18 @@
 
 ---
 
-## 3. Directory Structure (project-owned code)
+## 4. Directory Structure (project-owned code)
 
 ```
-CyberWithKaram/
-├── agent.py                        # Standalone Python agent (legacy/demo client)
+CyberLogia/                            # repo dir still named CyberWithKaram
+├── agent.py                          # Standalone Python agent (legacy/demo client)
 ├── artisan
-├── bootstrap/app.php               # Routing, middleware aliases, CSRF exceptions
+├── bootstrap/app.php                 # Routing, middleware aliases, CSRF exceptions
 ├── composer.json / composer.lock
 ├── package.json / vite.config.js / tailwind.config.js / postcss.config.js
 ├── phpunit.xml
-├── .cursorrules                    # AI-coding rules for this project
+├── stubs/agent_bootstrapper.py       # Template rendered into every agent download
+├── .cursorrules                      # AI-coding rules for this project
 ├── .env / .env.example
 ├── config/
 │   ├── app, auth, cache, database, filesystems, logging, mail,
@@ -107,15 +143,15 @@ CyberWithKaram/
 └── vendor/           # Composer dependencies (ignore)
 ```
 
-> ⚠️ `README.md` is still the **default Laravel README** (with a UTF-16 `# CyberWithKaram` heading appended) — this file replaces it as real documentation.
-> ⚠️ Working tree has **uncommitted modifications** (24 modified files + untracked `app/Support/`) on top of commit `8fc0e27`.
+> ⚠️ `README.md` is still the **default Laravel README** — this file replaces it as real documentation.
+> ⚠️ The on-disk repository/folder name is still `CyberWithKaram`; only the brand is **CyberLogia**.
 
 
 ---
 
-## 4. Routes
+## 5. Routes
 
-### 4.1 Web (`routes/web.php`)
+### 5.1 Web (`routes/web.php`)
 
 **Public:**
 | Method | URI | Name | Notes |
@@ -155,16 +191,29 @@ CyberWithKaram/
 
 `routes/auth.php` = standard Breeze auth routes (register, login, password reset, email verification, confirm password, logout).
 
-### 4.2 API (`routes/api.php`) — CSRF-exempt (`api/*` excluded in `bootstrap/app.php`)
+### 5.2 API (`routes/api.php`) — CSRF-exempt (`api/*` excluded in `bootstrap/app.php`)
 
-**Legacy/token API** (`auth:sanctum` + `throttle:api`):
-| Method | URI | Controller | Purpose |
-|---|---|---|---|
-| POST | `/api/heartbeat` | `AgentApiController@heartbeat` | Python agent heartbeat (requires approved license) |
-| GET | `/api/fetch-script?service_id&license_key` | `AgentApiController@fetchScript` | Returns `service.script_code` if license valid/non-expired |
-| POST | `/api/agent/token` | `AgentApiController@createToken` | Creates a `python-agent` Sanctum token |
+Rate limiters defined in `AppServiceProvider::boot()`:
 
-**v1 Agent protocol** (`throttle:api`; legacy alias at `/api/v1/agent/*`):
+| Limiter | Budget | Purpose |
+|---|---|---|
+| `api` | 60/min per user-or-IP | General API budget |
+| `agent-auth` | 30/min **and** 500/hour, keyed by `X-Agent-Key` hash | v1 register/poll/result — credential-stuffing defence |
+| `agent-script` | 10/min per authenticated user | `/api/fetch-script` — returns executable code and accepts a brute-forceable licence key |
+
+**Licensed agent API**:
+| Method | URI | Middleware | Controller | Purpose |
+|---|---|---|---|---|
+| GET | `/api/fetch-script?service_id&license_key` | `auth:sanctum` + `throttle:agent-script` | `AgentApiController@fetchScript` | Returns `service.script_code` if licence valid & non-expired |
+| POST | `/api/heartbeat` | `auth:sanctum` + `throttle:api` | `AgentApiController@heartbeat` | Python agent heartbeat (requires approved licence) |
+| POST | `/api/agent/token` | `auth:sanctum` + `throttle:api` | `AgentApiController@createToken` | Creates a `python-agent` Sanctum token |
+
+Both `/fetch-script` and the agent download respond with
+`Cache-Control: no-store, private`, `Pragma: no-cache` and
+`Referrer-Policy: no-referrer`, because the licence key travels in the URL
+(→ web-server access logs) and the download body embeds a live Sanctum token.
+
+**v1 Agent protocol** (`throttle:agent-auth`; legacy alias at `/api/v1/agent/*`):
 | Method | URI | Middleware | Purpose |
 |---|---|---|---|
 | POST | `/api/v1/agents/register` | `auth:sanctum` | Register agent → returns one-time `api_token` |
@@ -172,17 +221,21 @@ CyberWithKaram/
 | POST | `/api/v1/agents/poll` | `agent.auth` | Next queued, unexpired command |
 | POST | `/api/v1/agents/result` | `agent.auth` | Submit command result (replay-protected) |
 
-### 4.3 Console (`routes/console.php`)
+`agent.auth` (`app/Http/Middleware/AuthenticateAgent.php`) requires **both** an
+`X-Agent-Key` header and a bearer token, compared with
+`hash_equals($agent->api_token_hash, hash('sha256', $token))`.
+
+### 5.3 Console (`routes/console.php`)
 - `inspire` command.
 - **Schedule:** `agents:check-offline` **every 5 minutes**.
 
-### 4.4 Middleware aliases (`bootstrap/app.php`)
+### 5.4 Middleware aliases (`bootstrap/app.php`)
 - `agent.auth` → `App\Http\Middleware\AuthenticateAgent`
 - `admin` → `App\Http\Middleware\EnsureAdmin`
 
 ---
 
-## 5. Data Model (14 Eloquent Models)
+## 6. Data Model (14 Eloquent Models)
 
 | Model | Key fields / notes |
 |---|---|
@@ -205,7 +258,7 @@ CyberWithKaram/
 
 ---
 
-## 6. Database Migrations (38 files)
+## 7. Database Migrations (38 files)
 
 **Framework defaults:** `users` (+password reset tokens), `cache`, `jobs` (queues).
 
@@ -219,9 +272,9 @@ CyberWithKaram/
 
 ---
 
-## 7. Core Business Logic (Services)
+## 8. Core Business Logic (Services)
 
-### 7.1 PaymentVerificationService (`app/Services/Payment/`)
+### 8.1 PaymentVerificationService (`app/Services/Payment/`)
 - `approve(Payment, User $admin)`:
   - sets `status=approved`, `approved_at=now()`, `expires_at=now()+30 days`.
   - for `product_type === 'service'` → generates license key `CWK-` + 16 uppercase random chars (uniqueness loop against `payments`).
@@ -231,37 +284,37 @@ CyberWithKaram/
 - `getApprovedPayment(userId, serviceId, ?licenseKey)` / `userHasApprovedAccess(...)` → latest approved payment (optionally matching license).
 - **Note:** approval itself does not check expiry — expiry is enforced at script-fetch time.
 
-### 7.2 EntitlementService (`app/Services/Academy/`)
+### 8.2 EntitlementService (`app/Services/Academy/`)
 Cascading access checks — `userHasCourseAccess`, `userHasModuleAccess`, `userHasLessonAccess`:
 - Admin always has access.
 - Order: approved non-expired Payment → active non-expired Entitlement → inherited from parent (lesson inherits module, module inherits course) → free if `!requires_purchase && price <= 0`.
 - `userHasLessonAccess` additionally returns true when `lesson->is_free`.
 
-### 7.3 AgentProtocolService (`app/Services/Agent/`) — v1 protocol
+### 8.3 AgentProtocolService (`app/Services/Agent/`) — v1 protocol
 - `register(payload)` → creates Agent, stores **sha256 hash** of a 64-char random plain token, returns `[agent, plainToken]` (plain token shown once).
 - `heartbeat(agent, payload)` → updates agent (status/ip/os/version/fingerprint/last_seen, merges metadata) + creates an `AgentHeartbeat` row.
 - `nextCommand(agent)` → first `queued`, unexpired command ordered by id → marks `sent` + `sent_at`.
 - `storeResult(agent, payload)` → finds command by `command_uuid`; **replay protection**: aborts 409 if `nonce === agent->last_nonce`; `updateOrCreate` result with sha256 `result_hash` of stdout+stderr; stores `last_nonce`; dispatches `ProcessAgentResultJob`.
 
-### 7.4 CommandCenter services
+### 8.4 CommandCenter services
 - **CommandSigningService:** `HMAC-SHA256(json{command_key,payload,nonce,expires_at}, APP_KEY)`.
 - **CommandDispatchService:** `dispatch(agent, requester, commandKey, payload, ttl=300s)` → uuid command, signed, status `queued`, queues `DispatchAgentCommandJob`; `cancel(command, reason)` → no-op if already finished, else `cancelled` + timestamps + reason.
 
-### 7.5 TelegramService
+### 8.5 TelegramService
 - `isConfigured()` (needs both env values), `sendMessage()` via `https://api.telegram.org/bot{token}/sendMessage` (HTML parse mode, 10s timeout; logs failures; silently skips when unconfigured).
 - Helpers: `notifyNewPaymentReceipt(Payment)`, `notifyAgentOffline(AgentStatus)`.
 
-### 7.6 ActionLogService — `ActionLog::create(user_id, description, logged_at)`.
+### 8.6 ActionLogService — `ActionLog::create(user_id, description, logged_at)`.
 
-### 7.7 ServiceManagementService — normalizes create/update payloads for `Service` (slug auto-generated from title, default icon 🛡️, boolean casts).
+### 8.7 ServiceManagementService — normalizes create/update payloads for `Service` (slug auto-generated from title, default icon 🛡️, boolean casts).
 
-### 7.8 SecureVideoUpload (`app/Support/`)
+### 8.8 SecureVideoUpload (`app/Support/`)
 Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/mov/avi/wmv` extension **and** matching MIME; filename = `sha256(uniqid+name).ext`; saved to `storage/app/public/videos` (public disk).
 
 
 ---
 
-## 8. HTTP Layer Details
+## 9. HTTP Layer Details
 
 ### Middleware
 - **AuthenticateAgent** (`agent.auth`): requires headers `X-Agent-Key` + `Authorization: Bearer <token>`; looks up Agent by key; constant-time `hash_equals(api_token_hash, sha256(token))`; attaches `agent` to request attributes; 401 otherwise.
@@ -288,7 +341,7 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 
 ---
 
-## 9. Controllers & Views
+## 10. Controllers & Views
 
 ### Controllers of note
 - **PaymentController** — `showCheckout($slug, Request)` resolves product type from route name (`services/courses/modules/lessons`), loads approved/pending payments for the user, renders `payments.checkout` with `mockSlug`. `storePayment` validates submitted amount equals product price ±0.01 SYP, creates `pending` Payment, sends Telegram "New Payment Request". `mockGlobalPaymentSuccess` creates + immediately approves a payment (dev shortcut).
@@ -315,11 +368,11 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 
 ---
 
-## 10. Tests (`tests/`, PHPUnit 11)
+## 11. Tests (`tests/`, PHPUnit 11)
 
 | File | Covers |
 |---|---|
-| `Feature/SaasPlatformTest.php` | admin approves payment → license issued; user submits receipt (DB pending); `/api/fetch-script` 403 w/o license → 200 with valid license |
+| `Feature/SaasPlatformTest.php` | admin approves payment → licence issued; user submits receipt (DB pending); `/api/fetch-script` 403 w/o licence → 200 with valid licence; **generated bootstrapper** is valid Python with all placeholders resolved + licence baked in; download rejected without an approved licence; **seeded catalog** has exactly 10 automated services with correct category/price/script/details; **mock-payment bypass returns 404 in production**; USD price + label derivation; **API endpoints authenticated & rate limited**; HTML sanitizer strips tags/attributes; storefront + `/my-tools` render badges and `expires_at` |
 | `Feature/CommandCenterAndAgentFlowTest.php` | admin queues command; non-admin 403; **full agent flow**: register → poll → result; entitlement gates academy endpoints (403 → 200 after Entitlement created) |
 | `Feature/ExampleTest`, `Unit/ExampleTest` | framework defaults |
 | `Feature/ProfileTest` | profile update/delete |
@@ -327,31 +380,67 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 
 **Test env** (`phpunit.xml`): in-memory SQLite, sync queue, array cache/session/mail, `BCRYPT_ROUNDS=4`.
 
+Current status: **40 tests / 222 assertions — all passing.**
+
 ---
 
-## 11. The Python Agent
+## 12. The Python Agent
 
 ### `agent.py` (repo root — legacy/demo loop)
 - Reads `SANCTUM_TOKEN` env var; exits if missing.
-- Loop (every 300s): `POST /api/heartbeat` (service_id=1, status online, timestamp) then `GET /api/fetch-script` (service_id=1, license `CWK-TEST-KEY-001`) and **`exec(script_code)`**.
+- Loop (every 300s): `POST /api/heartbeat` (service_id=1, status online, timestamp) then `GET /api/fetch-script` (service_id=1, licence `CWK-TEST-KEY-001`) and **`exec(script_code)`**.
 - Handles 403 "expired" messages by exiting with a renewal warning.
 - ⚠️ Contains a commented security warning: `exec()` on remote code is dangerous — only acceptable because the API is trusted/licensed.
 
-### `agent_bootstrapper.py` (generated by `UserToolController@downloadAgent`)
-- Cross-platform; auto-installs `requests` if missing.
-- Bakes in `BASE_URL`, `SANCTUM_TOKEN`, `SERVICE_ID`, `LICENSE_KEY`.
-- Phases: (1) env verify, (2) fetch payload from `/api/fetch-script`, (3) `exec(payload)`; then heartbeats to `/api/heartbeat` every 60s forever.
+### `agent_bootstrapper.py` — dynamically generated, per-licence
+
+**Source template:** `stubs/agent_bootstrapper.py` (committed to the repo).
+**Generation:** `UserToolController::downloadAgent()` →
+`buildAgentBootstrapper()` reads the stub and substitutes placeholders with
+`strtr()`:
+
+| Placeholder | Value |
+|---|---|
+| `@BASE_URL@` | `rtrim(config('app.url'), '/')` |
+| `@SANCTUM_TOKEN@` | a **fresh** Sanctum token (`agent-bootstrapper`), also overridable via the `SANCTUM_TOKEN` env var |
+| `@SERVICE_ID@` | the requested service id |
+| `@LICENSE_KEY@` | the active licence key |
+| `@SERVICE_TITLE@` / `@SERVICE_CATEGORY@` | service metadata (escaped via `addcslashes`) |
+| `@LICENSE_EXPIRES_AT@` | `Payment.expires_at` (ISO-8601) |
+
+Using `strtr()` (rather than a PHP heredoc) means the Python body is **never**
+re-interpreted by PHP, so `$`, `{}` and backslashes inside the script are safe.
+The response streams as an attachment with `Content-Type: text/x-python` plus
+`Cache-Control: no-store` (it embeds a live token).
+
+**Execution lifecycle** — identical on Linux, macOS and Windows:
+
+| Phase | Function | Behaviour |
+|---|---|---|
+| **1 — Dependencies** | `phase_dependencies()` | Requires Python ≥ 3.8; imports every stdlib module it needs; if `requests` is missing it retries `pip install` via `python -m pip`, `python -m pip --user`, `pip3`, `pip`. Exits `4` if it still cannot be installed |
+| **2 — Licence check & fetch** | `fetch_script()` | `GET /api/fetch-script?service_id=&license_key=` with `Authorization: Bearer <token>`. Prints service/expiry context |
+| **3 — Safe execution** | `execute_payload()` | `exec(compile(code, "<cyberlogia-payload>", "exec"), namespace)`. `SystemExit` is caught, all other exceptions are logged with a traceback — **a payload error never terminates the agent** |
+| **4 — Expiry / cancellation** | (inside `fetch_script`) | HTTP **403** → prints "Agent Terminated — Renewal Required" with the renewal steps and `sys.exit(3)`. HTTP 401 → re-download hint, exit 3. HTTP 404 → contact support, exit 3. Other non-200 → exit 5 |
+| **5 — Heartbeat loop** | `send_heartbeat()` | `POST /api/heartbeat` every **60s** (`HEARTBEAT_INTERVAL`, mirrors `config('cyberlogia.agent_heartbeat_interval')`) with `service_id` + best-effort IP. Runs until `Ctrl+C` |
+
+**Exit codes:** `0` clean stop · `3` licence problem · `4` dependency problem ·
+`5` network/API problem.
+
+**Token handling:** the Sanctum token is only ever placed in the `Authorization`
+header — it is never printed to the console, and the licence key is sent as a
+query parameter (therefore `no-store` response headers are applied server-side).
 
 ---
 
-## 12. End-to-End Flows
+## 13. End-to-End Flows
 
-### Flow A — Buy a security service & run the agent
-1. Visitor browses `/services` → `/services/{slug}` → Pay → `/services/{slug}/pay` (auth+verified).
-2. Checkout form: account name/number, transaction amount (must match price), reference ID, notes → `POST /payment/submit` → Payment `pending` → Telegram alert to admin.
-3. Admin: `/admin/payments` → show → **Approve** → license `CWK-…` generated, `expires_at +30d`, ActionLog + Telegram message.
-4. User: `/my-tools` → gets Sanctum token + license → downloads `agent_bootstrapper.py` (or uses `agent.py`).
-5. Agent loop: heartbeat (403 unless approved license) and `fetch-script` (403 if invalid/expired license) → executes `script_code` stored on the Service by the admin.
+### Flow A — Buy a security agent & run it
+1. Visitor browses `/services` (category tags, "Automated Agent Service" badges, SYP + USD pricing) → `/services/{slug}` (HTML docs, 4-step how-it-works, installation guide) → Pay → `/services/{slug}/pay` (auth+verified).
+2. Checkout form: account name/number, transaction amount (must match price ±0.01), reference ID, notes → `POST /payment/submit` → Payment `pending` → Telegram alert to admin.
+3. Admin: `/admin/payments` → show → **Approve** → licence `CWK-…` generated, `expires_at = now()+30d`, ActionLog + Telegram message.
+4. User: `/my-tools` → shows each active subscription with `expires_at`, days remaining, status pill, licence key and a **Download `agent_bootstrapper.py`** button (plus copy-paste curl/PowerShell one-liners). Visiting the page issues a fresh `agent-api` Sanctum token.
+5. `GET /my-tools/download-agent/{service_id}/{license_key}` → streams `agent_bootstrapper.py` with base URL, fresh Sanctum token, service id, licence key and expiry baked in (`Cache-Control: no-store`).
+6. Agent lifecycle: dependency check → `GET /api/fetch-script` (403 if licence invalid/expired) → `exec()` the `script_code` stored on the Service → `POST /api/heartbeat` every 60s. On 403 the agent prints renewal instructions and exits with code 3.
 
 ### Flow B — Command Center (v1 agent protocol)
 1. Agent `POST /api/v1/agents/register` (Sanctum) → gets one-time `api_token` (only sha256 stored server-side).
@@ -369,31 +458,44 @@ Stores lesson videos safely: rejects path-traversal filenames; allows only `mp4/
 
 ---
 
-## 13. Security Mechanisms (and gaps)
+## 14. Security Mechanisms (and gaps)
 
 **Implemented:**
 - `is_admin` middleware + policies on all admin/command routes; Breeze auth + email verification.
 - Sanctum-style token hashing for v1 agents (`sha256` at rest, `hash_equals` compare); one-time plain token at register.
 - Command integrity: HMAC-SHA256 signature with `APP_KEY`, UUID nonce, expiry TTL, replay detection via `last_nonce` (409).
-- License keys: `CWK-` + 16 high-entropy chars, uniqueness enforced; expiry checked at script-fetch time.
+- Licence keys: `CWK-` + 16 high-entropy chars, uniqueness enforced; expiry checked at script-fetch time.
 - Receipt amount must match product price (±0.01) to prevent underpayment.
-- HTML sanitization of `Service.full_description` (tag allow-list); video upload extension+MIME validation, safe hashed filenames, path-traversal rejection.
-- API throttling (`throttle:api`), CSRF exemption limited to `api/*`, FormRequest validation everywhere.
+- HTML sanitization of `Service.full_description`: **tag allow-list plus full attribute stripping** (blocks `onclick=` / event-handler injection and `javascript:` URLs) before the value is rendered as HTML on the public service page.
+- Video upload extension+MIME validation, safe hashed filenames, path-traversal rejection.
+- CSRF exemption limited to `api/*`; FormRequest validation everywhere; all DB access goes through Eloquent/Query Builder, so queries are parameter-bound (no raw string interpolation).
 - Audit logging (`action_logs`) for payment approve/reject.
+- Telegram notifications are **best-effort**: `ConnectionException` is caught and logged so a DNS/outage can never fail a payment approval.
+
+### Hardened during the QA pass
+
+| Area | Hardening |
+|---|---|
+| **Payment bypass (critical)** | `PaymentController::mockGlobalPaymentSuccess()` self-approved payments and minted real licences for any logged-in user. Now `abort_if(app()->environment('production'), 404)`, and the "Pay Securely Now" button is replaced by manual-verification copy in production. Covered by a regression test that asserts 404 + zero payments. |
+| **Rate limiting** | Added `agent-auth` (30/min + 500/hour, keyed by a hashed `X-Agent-Key`) and `agent-script` (10/min per user) limiters; `/api/fetch-script` returns executable code and accepts a brute-forceable licence key, so it is now throttled harder than the rest of the API. |
+| **Credential caching** | `/api/fetch-script` and the agent download now send `Cache-Control: no-store, private`, `Pragma: no-cache`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` — the licence key travels in the URL (→ access logs) and the download body embeds a live token. |
+| **Stored XSS** | `Service::setFullDescriptionAttribute()` now strips **all** attributes, not just disallowed tags, because `full_description` is rendered as HTML on `/services/{slug}`. |
+| **Resilience** | Telegram network failures no longer propagate and break core flows. |
+| **UI correctness** | Checkout/my-tools no longer instruct users to run `agent.py`; they reference the generated `agent_bootstrapper.py`. |
 
 **Known gaps / notes (be aware when working on the project):**
-- Two parallel agent systems coexist: the licensed legacy API (`/api/heartbeat`, `/api/fetch-script` with Sanctum + license key) and the stronger v1 protocol (`X-Agent-Key` + hashed token).
+- Two parallel agent systems coexist: the licensed legacy API (`/api/heartbeat`, `/api/fetch-script` with Sanctum + licence key) and the stronger v1 protocol (`X-Agent-Key` + hashed token).
 - Admin bypass key `ADMIN-TEST-MODE` exists in code for `fetchScript` and agent download.
 - `DispatchAgentCommandJob` / `ProcessAgentResultJob` are minimal (dispatch job is effectively a stub).
-- `payment.mock-global-success` route auto-approves payments — must be disabled/removed in production.
+- `payment.mock-global-success` still exists for local development but now **404s in production**; delete the route entirely for extra assurance.
 - `/my-tools` regenerates the Sanctum `agent-api` token on every page load (deletes prior ones), invalidating running agents' tokens.
-- Currency labeled **SYP** (Syrian Pounds) throughout.
+- Currency is **SYP**; the USD figure shown throughout is derived from the nominal `cyberlogia.syp_per_usd` rate and is indicative only.
+- Licence keys are sent as a **query parameter** (API contract), so they will appear in web-server access logs — redact these in production log handling.
 - Multiple `lessons` schema-fix migrations indicate past churn — verify migration state before adding new ones.
-- Git working tree has 24 modified files + untracked `app/Support/` not yet committed.
 
 ---
 
-## 14. Conventions & AI Rules (`.cursorrules`)
+## 15. Conventions & AI Rules (`.cursorrules`)
 
 The repo carries explicit AI-coding rules:
 1. **Communication:** be concise, incremental edits only ("..." for unchanged code), no hallucinated variables/models — ask instead.
@@ -404,7 +506,7 @@ The repo carries explicit AI-coding rules:
 
 ---
 
-## 15. How to Run
+## 16. How to Run
 
 ```bash
 composer setup      # install + .env + key + migrate + npm install/build
@@ -417,13 +519,13 @@ npm run dev
 composer test       # run PHPUnit
 ```
 
-- Seeder: `php artisan db:seed` → truncates and re-creates **10 demo services** (Web App Pentesting, Network Security Audit, API Security Testing, Advanced Manual Exploitation, SIEM Deployment, Endpoint Protection (EDR), Incident Response Plan, Security Consultation, AWS/Azure Hardening, Kubernetes Security) across categories VAPT / SOC / Consultation / Cloud.
+- Seeder: `php artisan db:seed` → clears `services` and re-creates the **10 automated CyberLogia agents** (EDR & Threat Hunting, CIS Hardening, Log Collector/SIEM, FIM, Ransomware/Breach Simulation, Internal Vuln Scanner, Local App Misconfig, Cloud Sandbox/Attachment Auditor, Cloud CIS Benchmarking, K8s & Docker Auditor) across **Blue Team / Red Team / Cloud Security**. Idempotent — re-running always leaves exactly 10 rows.
 - Create an admin: set `is_admin = true` on a user row (no seeder does this automatically).
 - Telegram: set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (already present in local `.env`).
 
 ---
 
-## 16. Quick File Index for AI Agents
+## 17. Quick File Index for AI Agents
 
 | If you need to… | Read |
 |---|---|
@@ -436,6 +538,10 @@ composer test       # run PHPUnit
 | Telegram alerts | `app/Services/Telegram/TelegramService.php`, `config/telegram.php` |
 | Schema | `database/migrations/*`, `app/Models/*` |
 | Admin UI style | `resources/views/layouts/admin.blade.php`, `tailwind.config.js` |
-| Agent download generator | `app/Http/Controllers/UserToolController.php` |
+| **Agent download generator** | `app/Http/Controllers/UserToolController.php` + template `stubs/agent_bootstrapper.py` |
+| **Rate limiters** | `app/Providers/AppServiceProvider.php` (`api`, `agent-auth`, `agent-script`) |
+| **Seeded service catalog** | `database/seeders/DatabaseSeeder.php`, `app/Models/Service.php` (`usdPrice()`, `priceLabel()`, HTML sanitizer) |
+| **Brand + FX config** | `config/cyberlogia.php` |
+| **Storefront views** | `resources/views/services.blade.php`, `resources/views/service-details.blade.php`, `resources/views/my-tools.blade.php` |
 | Tests / expected behavior | `tests/Feature/SaasPlatformTest.php`, `tests/Feature/CommandCenterAndAgentFlowTest.php` |
 

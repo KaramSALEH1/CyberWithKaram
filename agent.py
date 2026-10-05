@@ -82,7 +82,7 @@ def send_heartbeat(service_id: int):
             print(f"Error sending heartbeat: {e}")
 
 def main():
-    print("Starting CyberWithKaram Agent...")
+    print("Starting CyberLogia Agent...")
     while True:
         # Send heartbeat
         send_heartbeat(service_id=1)
