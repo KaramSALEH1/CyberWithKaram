@@ -3,7 +3,7 @@
 @section('title', 'Payment Verification')
 
 @section('content')
-    <div class="space-y-6">
+    <div class="space-y-6 px-4 sm:px-6 lg:px-8 py-8">
         <div>
             <h1 class="text-3xl font-black">Payment <span class="text-karam-green">Verification</span></h1>
             <p class="text-gray-400 text-sm mt-1">Review uploaded receipts and approve licenses.</p>

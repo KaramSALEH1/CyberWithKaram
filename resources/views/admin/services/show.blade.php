@@ -28,7 +28,7 @@
                 <p><span class="text-gray-400">Visibility:</span> {{ $service->is_visible ? 'Visible' : 'Hidden' }}</p>
                 <p><span class="text-gray-400">Automation:</span> {{ $service->is_automated ? 'Enabled' : 'Manual' }}</p>
                 @if($service->logo_url)
-                    <img src="{{ $service->logo_url }}" alt="{{ $service->title }}" class="mt-2 h-14 object-contain rounded">
+                    <img src="{{ $service->logo_url }}" alt="{{ $service->title }}" class="mt-2 h-14 w-auto max-w-full object-contain rounded">
                 @endif
             </div>
 

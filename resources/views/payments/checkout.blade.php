@@ -3,7 +3,7 @@
 @section('title', 'Pay for ' . $product->title)
 
 @section('content')
-    <section class="py-16 px-6 max-w-3xl mx-auto" x-data="{
+    <section class="py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto" x-data="{
         paymentMethod: 'local',
         copyToClipboard(event, elementId) {
             const textToCopy = document.getElementById(elementId).innerText;
@@ -17,10 +17,10 @@
             window.location.href = '{{ route('payment.mock-global-success', ['type' => $product_type, 'slug' => $mockSlug]) }}';
         }
     }">
-        <div class="bg-[#0a0a0a] border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] rounded-2xl p-8">
-            <h1 class="text-3xl font-black mb-2 text-white">{{ $product->title }}</h1>
-            <div class="flex flex-wrap items-baseline gap-3 mb-6">
-                <span class="text-cyan-400 text-2xl font-bold">{{ number_format((float) $product->price, 0) }} SYP</span>
+        <div class="bg-[#0a0a0a] border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] rounded-2xl p-4 sm:p-6 md:p-8">
+            <h1 class="text-2xl sm:text-3xl font-black mb-2 text-white">{{ $product->title }}</h1>
+            <div class="flex flex-wrap items-baseline gap-3 mb-4 sm:mb-6">
+                <span class="text-cyan-400 text-xl sm:text-2xl font-bold">{{ number_format((float) $product->price, 0) }} SYP</span>
                 @if ((float) $product->price > 0)
                     <span class="text-[10px] font-mono text-gray-600">|</span>
                     <span class="text-sm font-mono font-semibold text-gray-300">
@@ -30,12 +30,12 @@
             </div>
 
             @if (session('success'))
-                <div class="mb-4 rounded-lg border border-green-700 bg-green-900/20 p-4 text-green-300">
+                <div class="mb-4 rounded-lg border border-green-700 bg-green-900/20 p-3 sm:p-4 text-green-300">
                     {{ session('success') }}</div>
             @endif
 
             @if ($approvedPayment)
-                <div class="mb-6 rounded-lg border border-cyan-500/40 bg-cyan-500/10 p-4">
+                <div class="mb-4 sm:mb-6 rounded-lg border border-cyan-500/40 bg-cyan-500/10 p-3 sm:p-4">
                     <p class="font-bold text-cyan-400">
                         @if($product_type == 'course')
                             Academy Access Granted
@@ -49,14 +49,14 @@
                     </p>
                     @if ($product_type == 'service')
                         <p class="text-sm text-gray-300 mt-1">Your license key:</p>
-                        <p class="font-mono text-lg mt-2 text-cyan-300">{{ $approvedPayment->license_key }}</p>
-                        <p class="text-xs text-gray-400 mt-3">Deploy your agent instantly:</p>
-                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-3 rounded-lg text-[10px] text-green-400 font-mono break-all">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent_bootstrapper.py &amp;&amp; python3 agent_bootstrapper.py</code>
-                        <p class="text-xs text-gray-400 mt-3">
+                        <p class="font-mono text-base sm:text-lg mt-1 text-cyan-300">{{ $approvedPayment->license_key }}</p>
+                        <p class="text-xs text-gray-400 mt-2">Deploy your agent instantly:</p>
+                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-2.5 sm:p-3 rounded-lg text-[10px] sm:text-xs text-green-400 font-mono break-all overflow-x-auto whitespace-pre-wrap">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent_bootstrapper.py &amp;&amp; python3 agent_bootstrapper.py</code>
+                        <p class="text-xs text-gray-400 mt-2">
                             Valid until <span class="font-mono text-cyan-300">{{ $approvedPayment->expires_at?->format('Y-m-d H:i') }} UTC</span>
                             ({{ $approvedPayment->expires_at?->diffForHumans() }} left).
                         </p>
-                        <a href="{{ route('my-tools.index') }}" class="inline-block mt-4 text-cyan-400 text-sm hover:underline">View full deployment commands →</a>
+                        <a href="{{ route('my-tools.index') }}" class="inline-block mt-3 text-cyan-400 text-sm hover:underline">View full deployment commands →</a>
                     @else
                         <p class="text-sm text-gray-300 mt-1">
                             @if($product_type == 'course')
@@ -69,17 +69,17 @@
                         </p>
                         @if ($product_type === 'lesson')
                             <a href="{{ route('lessons.show', [$product->module->course->slug, $product->slug]) }}"
-                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Go to Lesson
                             </a>
                         @elseif ($product_type === 'course')
                             <a href="{{ route('courses.show', $product->slug) }}"
-                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Start Learning
                             </a>
                         @elseif ($product_type === 'module')
                             <a href="{{ route('courses.show', $product->course->slug) }}"
-                                class="inline-block mt-4 bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Start Learning
                             </a>
                         @endif
@@ -109,11 +109,8 @@
                         <div
                             class="flex-1 border-t-2 {{ $pendingPayment->status === 'pending' ? 'border-gray-600' : 'border-cyan-400' }} mx-2">
                         </div>
-                        <div class="text-center {{ $approvedPayment ? 'text-cyan-400 font-semibold' : 'text-gray-500' }}">
-                            Access Granted
-                            @if (!$approvedPayment)
-                                <span class="block text-xs">(Not Yet)</span>
-                            @endif
+                        <div class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500' : 'text-cyan-400 font-semibold' }}">
+                            Status: <span class="font-semibold">Awaiting Approval</span>
                         </div>
                     </div>
                     <p class="text-xs text-gray-400 mt-3">Your payment reference: <span

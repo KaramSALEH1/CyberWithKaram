@@ -156,7 +156,14 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/my-tools', [UserToolController::class, 'index'])->name('my-tools.index');
-    Route::get('/my-tools/download-agent/{service_id}/{license_key}', [UserToolController::class, 'downloadAgent'])->name('my-tools.download-agent');
 });
+
+// The agent bootstrapper download is authenticated by the licence key alone
+// (no session cookie), so the copy-paste curl / PowerShell commands work from
+// a bare terminal. The controller answers invalid/expired keys with a JSON 403
+// so an HTML login/error page can never be saved into a `.py` file.
+Route::get('/my-tools/download-agent/{service_id}/{license_key}', [UserToolController::class, 'downloadAgent'])
+    ->whereNumber('service_id')
+    ->name('my-tools.download-agent');
 
 require __DIR__ . '/auth.php';

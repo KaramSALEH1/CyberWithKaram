@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="py-12 bg-gray-900 min-h-screen text-white">
-        <div class="max-w-2xl mx-auto px-6">
+    <div class="py-10 sm:py-12 bg-gray-900 min-h-screen text-white px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto">
             <h1 class="text-3xl font-black mb-8 text-yellow-500 italic">EDIT LESSON</h1>
 
             <form action="{{ route('admin.lesson.update', $lesson) }}" method="POST" enctype="multipart/form-data"
-                class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl space-y-6" x-data="{ videoType: '{{ $lesson->video_type }}' }">
+                class="bg-gray-800 p-4 sm:p-8 rounded-2xl border border-gray-700 shadow-2xl space-y-6" x-data="{ videoType: '{{ $lesson->video_type }}' }">
                 @csrf
                 @method('PUT')
 

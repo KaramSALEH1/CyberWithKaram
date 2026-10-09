@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')
-    <div class="py-12 bg-gray-900 min-h-screen text-white">
-        <div class="max-w-6xl mx-auto px-6">
+    <div class="py-10 sm:py-12 bg-gray-900 min-h-screen text-white px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-10">
                 <h1 class="text-3xl font-black italic text-karam-green underline">ACADEMY COMMAND CENTER</h1>
                 <button onclick="document.getElementById('courseModal').classList.remove('hidden')"
@@ -38,9 +38,9 @@
                             </div>
                         </div>
 
-                        <div class="p-6 space-y-6">
+                        <div class="p-4 sm:p-6 space-y-6">
                             @forelse($course->modules as $module)
-                                <div class="bg-gray-900/50 p-4 rounded-xl border-l-4 border-karam-green">
+                                <div class="bg-gray-900/50 p-3 sm:p-4 rounded-xl border-l-4 border-karam-green">
                                     <div class="flex justify-between items-center mb-4">
                                         <div class="flex flex-col">
                                             <h3 class="font-bold text-lg text-gray-200 uppercase">{{ $module->title }}</h3>
@@ -59,7 +59,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         @foreach ($module->lessons as $lesson)
                                             <div
-                                                class="bg-gray-800 p-3 rounded-lg flex items-center justify-between border border-gray-700 group hover:border-karam-green transition">
+                                                class="bg-gray-800 p-2 sm:p-3 rounded-lg flex items-center justify-between border border-gray-700 group hover:border-karam-green transition">
                                                 <div class="flex items-center gap-3">
                                                     <span
                                                         class="text-karam-green font-mono text-xs">{{ $loop->iteration }}</span>

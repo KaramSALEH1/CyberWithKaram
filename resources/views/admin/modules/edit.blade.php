@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="py-12 bg-gray-900 min-h-screen text-white">
-        <div class="max-w-2xl mx-auto px-6">
+    <div class="py-10 sm:py-12 bg-gray-900 min-h-screen text-white px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto">
             <h1 class="text-3xl font-black mb-8 text-blue-400 italic">EDIT MODULE</h1>
 
             <form action="{{ route('admin.module.update', $module) }}" method="POST"
-                class="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl space-y-6">
+                class="bg-gray-800 p-4 sm:p-8 rounded-2xl border border-gray-700 shadow-2xl space-y-6">
                 @csrf
                 @method('PUT')
 

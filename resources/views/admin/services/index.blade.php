@@ -3,8 +3,8 @@
 @section('title', 'Service Control Center')
 
 @section('content')
-<div class="py-10 bg-gray-900 min-h-screen text-white">
-    <div class="max-w-7xl mx-auto px-6">
+<div class="py-10 bg-gray-900 min-h-screen text-white px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-black">Service <span class="text-karam-green">Control Center</span></h1>
@@ -19,23 +19,25 @@
 
         <div class="space-y-3">
             @forelse($services as $service)
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="text-2xl">{{ $service->icon ?: '🛡️' }}</div>
-                        <div>
-                            <p class="font-bold">{{ $service->title }}</p>
-                            <p class="text-xs text-gray-400">{{ $service->slug }} | {{ $service->category }} | ${{ number_format((float) $service->price, 2) }}</p>
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 hover:border-cyan-500/30 transition-all duration-300">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">{{ $service->icon ?: '🛡️' }}</div>
+                            <div class="min-w-0">
+                                <p class="font-bold text-sm sm:text-base">{{ $service->title }}</p>
+                                <p class="text-xs text-gray-400 truncate">{{ $service->slug }} | {{ $service->category }} | ${{ number_format((float) $service->price, 2) }}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs px-2 py-1 rounded {{ $service->is_visible ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300' }}">{{ $service->is_visible ? 'Visible' : 'Hidden' }}</span>
-                        <a href="{{ route('admin.services.show', $service) }}" class="px-3 py-2 rounded bg-gray-700 text-xs font-bold">Control</a>
-                        <a href="{{ route('admin.services.edit', $service) }}" class="px-3 py-2 rounded bg-blue-900 text-blue-300 text-xs font-bold">Edit</a>
-                        <form method="POST" action="{{ route('admin.services.destroy', $service) }}" onsubmit="return confirm('Delete this service?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="px-3 py-2 rounded bg-red-900 text-red-300 text-xs font-bold">Delete</button>
-                        </form>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="text-xs px-2 py-1 rounded {{ $service->is_visible ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300' }}">{{ $service->is_visible ? 'Visible' : 'Hidden' }}</span>
+                            <a href="{{ route('admin.services.show', $service) }}" class="px-3 py-2 rounded bg-gray-700 text-xs font-bold">Control</a>
+                            <a href="{{ route('admin.services.edit', $service) }}" class="px-3 py-2 rounded bg-blue-900 text-blue-300 text-xs font-bold">Edit</a>
+                            <form method="POST" action="{{ route('admin.services.destroy', $service) }}" onsubmit="return confirm('Delete this service?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="px-3 py-2 rounded bg-red-900 text-red-300 text-xs font-bold">Delete</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             @empty

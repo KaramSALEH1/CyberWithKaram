@@ -12,7 +12,7 @@
         .border-karam-green { border-color: #008751; }
     </style>
 </head>
-<body class="bg-gray-950 text-white min-h-screen">
+<body class="bg-gray-950 text-white min-h-screen px-4 sm:px-6 lg:px-8">
     <div class="flex min-h-screen">
         <aside class="w-64 bg-gray-900 border-r border-gray-800 p-6 hidden lg:block">
             <a href="{{ route('dashboard') }}" class="text-xl font-black text-karam-green block mb-8">CYBERLOGIA COMMAND</a>
@@ -25,7 +25,7 @@
                 <a href="{{ route('admin.command-center.index') }}" class="block px-4 py-3 rounded-lg {{ request()->routeIs('admin.command-center.*') ? 'bg-karam-green/20 text-karam-green border border-karam-green/40' : 'bg-gray-800 border border-gray-700 hover:border-karam-green' }}">Agent Center</a>
             </nav>
         </aside>
-        <main class="flex-1 p-6 lg:p-10">
+        <main class="flex-1 p-4 sm:p-6 lg:p-10">
             @if (session('success'))
                 <div class="mb-4 rounded-lg border border-green-700 bg-green-900/20 p-4 text-green-300">{{ session('success') }}</div>
             @endif

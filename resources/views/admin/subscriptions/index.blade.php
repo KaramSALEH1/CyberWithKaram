@@ -130,7 +130,7 @@
         </div>
 
         <!-- Subscriptions table -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-950 text-gray-400 text-xs uppercase tracking-wider">
                     <tr>
@@ -165,7 +165,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 @if ($payment->license_key)
-                                    <code class="text-xs text-cyan-400 bg-black/40 border border-gray-700 rounded px-2 py-1">
+                                    <code class="text-xs text-cyan-400 bg-black/40 border border-gray-700 rounded px-2 py-1 break-all overflow-x-auto whitespace-pre-wrap">
                                         {{ $payment->license_key }}
                                     </code>
                                 @else

@@ -30,7 +30,7 @@
                 ] as $label => $value)
                     <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <dt class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $label }}</dt>
-                        <dd class="sm:col-span-2 text-sm text-gray-200 {{ $label === 'License Key' ? 'font-mono text-cyan-400' : '' }}">{{ $value }}</dd>
+                        <dd class="sm:col-span-2 text-sm text-gray-200 {{ $label === 'License Key' ? 'font-mono text-cyan-400 break-all overflow-x-auto whitespace-pre-wrap' : '' }}">{{ $value }}</dd>
                     </div>
                 @endforeach
             </dl>

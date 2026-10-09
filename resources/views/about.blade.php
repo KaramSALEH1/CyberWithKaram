@@ -117,7 +117,7 @@
                         <div
                             class="rounded-xl bg-gray-950 border border-white/5 p-8 flex flex-col items-center justify-center min-h-[22rem]">
                             <img src="{{ asset('images/logo.png') }}" alt="CyberLogia"
-                                class="h-40 opacity-80 drop-shadow-[0_0_35px_rgba(0,242,96,0.25)]">
+                                class="h-40 w-auto max-w-full object-contain opacity-80 drop-shadow-[0_0_35px_rgba(0,242,96,0.25)]">
                             <p class="font-mono text-xs text-karam-green tracking-[0.3em] uppercase mt-8">
                                 Secure Today · Protect Tomorrow
                             </p>

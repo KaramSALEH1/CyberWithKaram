@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Service;
-use App\Services\Payment\PaymentVerificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Illuminate\View\View;
 
 class UserToolController extends Controller
@@ -14,7 +12,7 @@ class UserToolController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $baseUrl = rtrim(config('app.url'), '/');
+        $baseUrl = request()->schemeAndHttpHost();
 
         $payments = $user->payments()
             ->with('service')
@@ -31,7 +29,12 @@ class UserToolController extends Controller
     }
 
     /**
-     * Download the CyberLogia agent bootstrapper for an approved service.
+     * Download the CyberLogia agent bootstrapper for a licensed service.
+     *
+     * Access is verified strictly by the licence key (no session cookie), so
+     * the copy-paste curl / PowerShell commands on /my-tools work from a bare
+     * terminal. Invalid or expired keys always yield a JSON 403 — never an
+     * HTML login/error page — so a `.py` file can never contain HTML markup.
      *
      * The generated `agent_bootstrapper.py` is tailored to the requested
      * `service_id` and `license_key` and runs identically on Linux and Windows:
@@ -42,20 +45,39 @@ class UserToolController extends Controller
      *   4. Expiry / cancellation    - HTTP 403 terminates with renewal guidance
      *   5. Heartbeat loop           - POST /api/heartbeat every 60 seconds
      */
-    public function downloadAgent(Request $request, int $service_id, string $license_key, PaymentVerificationService $verificationService)
+    public function downloadAgent(Request $request, int $service_id, string $license_key)
     {
-        $user = $request->user();
+        // Download access is verified strictly by the licence key matching the
+        // service, so no browser session cookies are required.
+        $payment = Payment::query()
+            ->where('service_id', $service_id)
+            ->where('license_key', $license_key)
+            ->where('status', 'approved')
+            ->first();
 
-        $payment = $verificationService->getApprovedPayment($user->id, $service_id, $license_key);
-        if (! $payment && ! ($user->is_admin && $license_key === 'ADMIN-TEST-MODE')) {
-            abort(403, 'Invalid license or payment not approved.');
+        $isValidLicense = $payment !== null
+            && ($payment->expires_at === null || ! $payment->expires_at->isPast());
+
+        // Documented ADMIN-TEST-MODE bypass stays available to logged-in admins
+        // only; anonymous terminal requests must present a real licence key.
+        $isAdminBypass = $request->user()?->is_admin && $license_key === 'ADMIN-TEST-MODE';
+
+        if (! $isValidLicense && ! $isAdminBypass) {
+            return response()->json(['error' => 'Invalid or expired license key.'], 403);
         }
 
-        $sanctumToken = $user->createToken('agent-bootstrapper')->plainTextToken;
-        $baseUrl = rtrim(config('app.url'), '/');
+        // The baked-in Sanctum token must belong to the licence owner because
+        // the downloader itself may be an unauthenticated terminal session.
+        $tokenOwner = $payment?->user ?? $request->user();
+        if ($tokenOwner === null) {
+            return response()->json(['error' => 'Invalid or expired license key.'], 403);
+        }
+
+        $sanctumToken = $tokenOwner->createToken('agent-bootstrapper')->plainTextToken;
+        $baseUrl = request()->schemeAndHttpHost();
         $service = Service::find($service_id);
 
-        $agentTemplate = $this->buildAgentBootstrapper(
+        $pythonScript = $this->buildAgentBootstrapper(
             baseUrl: $baseUrl,
             sanctumToken: $sanctumToken,
             serviceId: $service_id,
@@ -65,19 +87,14 @@ class UserToolController extends Controller
             expiresAt: $payment?->expires_at?->toIso8601String(),
         );
 
-        $filename = 'agent_bootstrapper.py';
-
-        return Response::streamDownload(function () use ($agentTemplate) {
-            echo $agentTemplate;
-        }, $filename, [
-            'Content-Type' => 'text/x-python; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-            'X-CyberLogia-Service' => $service?->title ?? 'CyberLogia Automated Service',
+        return response($pythonScript, 200)
+            ->header('Content-Type', 'text/x-python')
+            ->header('Content-Disposition', 'attachment; filename="agent_bootstrapper.py"')
+            ->header('X-CyberLogia-Service', $service?->title ?? 'CyberLogia Automated Service')
             // The generated file embeds a Sanctum token and licence key.
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
-            'Pragma' => 'no-cache',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+            ->header('Pragma', 'no-cache')
+            ->header('X-Content-Type-Options', 'nosniff');
     }
 
     /**

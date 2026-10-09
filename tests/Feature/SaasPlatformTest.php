@@ -51,7 +51,7 @@ class SaasPlatformTest extends TestCase
         $response->assertOk();
         $response->assertDownload('agent_bootstrapper.py');
 
-        $script = $response->streamedContent();
+        $script = $response->getContent();
 
         // Configuration is baked in for the requested service / license.
         $this->assertStringContainsString('CyberLogia', $script);
@@ -75,6 +75,9 @@ class SaasPlatformTest extends TestCase
 
         // Every placeholder must be resolved.
         $this->assertDoesNotMatchRegularExpression('/@[A-Z_]+@/', $script);
+
+        // The base URL resolves scheme + host dynamically (test host = localhost).
+        $this->assertStringContainsString('BASE_URL = "http://localhost"', $script);
     }
 
     public function test_agent_download_is_rejected_without_approved_license(): void
@@ -90,12 +93,176 @@ class SaasPlatformTest extends TestCase
             'is_available' => true,
         ]);
 
-        $this->actingAs($user)->get(
-            route('my-tools.download-agent', [
+        $uri = route('my-tools.download-agent', [
+            'service_id' => $service->id,
+            'license_key' => 'NOT-A-REAL-LICENSE',
+        ]);
+
+        // Authenticated user with a bogus key -> JSON 403, never an HTML page.
+        $authenticated = $this->actingAs($user)->get($uri);
+        $authenticated->assertForbidden();
+        $authenticated->assertJson(['error' => 'Invalid or expired license key.']);
+        $this->assertStringNotContainsString('<!DOCTYPE html>', $authenticated->getContent());
+
+        // Anonymous curl / PowerShell with a bogus key -> same JSON 403, with no
+        // login redirect, so no HTML can end up inside the downloaded .py file.
+        $anonymous = $this->get($uri);
+        $anonymous->assertForbidden();
+        $anonymous->assertJson(['error' => 'Invalid or expired license key.']);
+        $this->assertStringNotContainsString('<!DOCTYPE html>', $anonymous->getContent());
+    }
+
+    public function test_agent_download_with_expired_license_returns_json_403(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::create([
+            'title' => 'EDR Agent',
+            'slug' => 'edr-agent-expired',
+            'category' => 'Blue Team',
+            'description' => 'Test',
+            'icon' => '🛡️',
+            'price' => 80000,
+            'is_available' => true,
+        ]);
+
+        Payment::create([
+            'user_id' => $user->id,
+            'service_id' => $service->id,
+            'amount' => 80000,
+            'status' => 'approved',
+            'license_key' => 'CWK-EXPIRED-TEST-1',
+            'approved_at' => now()->subDays(40),
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $response = $this->get(route('my-tools.download-agent', [
+            'service_id' => $service->id,
+            'license_key' => 'CWK-EXPIRED-TEST-1',
+        ]));
+
+        $response->assertForbidden();
+        $response->assertJson(['error' => 'Invalid or expired license key.']);
+        $this->assertStringNotContainsString('<!DOCTYPE html>', $response->getContent());
+    }
+
+    public function test_agent_download_without_session_cookies_returns_pure_python(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::create([
+            'title' => 'Automated EDR & Threat Hunting Agent',
+            'slug' => 'automated-edr-no-cookies-agent',
+            'category' => 'Blue Team',
+            'description' => 'Test',
+            'full_description' => '<p>Test</p>',
+            'icon' => '🛡️',
+            'price' => 80000,
+            'is_automated' => true,
+            'is_available' => true,
+            'script_code' => "print('payload')",
+            'payment_instructions' => 'Test instructions',
+        ]);
+
+        Payment::create([
+            'user_id' => $user->id,
+            'service_id' => $service->id,
+            'amount' => 80000,
+            'status' => 'approved',
+            'license_key' => 'CWK-NO-COOKIES-TEST-1',
+            'approved_at' => now(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        // Simulates Invoke-WebRequest / curl: NO session cookie at all, fetched
+        // from an origin with an explicit port (http://localhost:8000).
+        $response = $this->get(
+            'http://localhost:8000'.route('my-tools.download-agent', [
                 'service_id' => $service->id,
-                'license_key' => 'NOT-A-REAL-LICENSE',
-            ])
-        )->assertForbidden();
+                'license_key' => 'CWK-NO-COOKIES-TEST-1',
+            ], false)
+        );
+
+        $response->assertOk();
+        // Symfony's Response::prepare() appends "; charset=utf-8" to any
+        // "text/*" Content-Type, so assert the media type rather than an
+        // exact byte-for-byte string. The controller still sends the strict
+        // "Content-Type: text/x-python" header.
+        $this->assertStringStartsWith(
+            'text/x-python',
+            (string) $response->headers->get('Content-Type'),
+            'Download must be served as Python source (Content-Type: text/x-python).'
+        );
+        $response->assertHeader('Content-Disposition', 'attachment; filename="agent_bootstrapper.py"');
+
+        $script = $response->getContent();
+
+        // Pure Python only: no login/error HTML can be saved into the .py file.
+        $this->assertStringStartsWith('#!/usr/bin/env python3', $script);
+        $this->assertStringNotContainsString('<!DOCTYPE html>', $script);
+        $this->assertStringNotContainsString('<html', $script);
+
+        // The active scheme, host AND port are baked in for the agent runtime.
+        $this->assertStringContainsString('BASE_URL = "http://localhost:8000"', $script);
+        $this->assertStringContainsString('CWK-NO-COOKIES-TEST-1', $script);
+        $this->assertStringContainsString('SERVICE_ID = '.$service->id, $script);
+        $this->assertStringContainsString('/api/fetch-script', $script);
+
+        $this->assertIsValidPython($script);
+    }
+
+    /**
+     * Assert the downloaded agent parses as valid Python.
+     *
+     * Uses a real interpreter when one is available (python / py -3 / python3);
+     * otherwise falls back to structural checks so the suite still runs on
+     * machines without Python installed.
+     */
+    private function assertIsValidPython(string $script): void
+    {
+        $python = $this->findPythonBinary();
+
+        if ($python === null) {
+            $this->assertStringStartsWith('#!/usr/bin/env python3', $script);
+            $this->assertStringNotContainsString('<!DOCTYPE html>', $script);
+
+            return;
+        }
+
+        $checker = tempnam(sys_get_temp_dir(), 'cwk_py_checker_');
+        $target = tempnam(sys_get_temp_dir(), 'cwk_agent_');
+
+        file_put_contents(
+            $checker,
+            "import ast, sys\nwith open(sys.argv[1], encoding='utf-8') as handle:\n    ast.parse(handle.read())\n"
+        );
+        file_put_contents($target, $script);
+
+        $output = [];
+        $exitCode = 0;
+        exec($python.' '.escapeshellarg($checker).' '.escapeshellarg($target).' 2>&1', $output, $exitCode);
+
+        @unlink($checker);
+        @unlink($target);
+
+        $this->assertSame(
+            0,
+            $exitCode,
+            "Downloaded agent_bootstrapper.py failed the Python syntax check:\n".implode("\n", $output)
+        );
+    }
+
+    private function findPythonBinary(): ?string
+    {
+        foreach (['python', 'py -3', 'python3'] as $binary) {
+            $output = [];
+            $exitCode = 0;
+            exec($binary.' --version 2>&1', $output, $exitCode);
+
+            if ($exitCode === 0) {
+                return $binary;
+            }
+        }
+
+        return null;
     }
 
     public function test_seeded_catalog_contains_ten_automated_agent_services(): void
@@ -176,6 +343,11 @@ class SaasPlatformTest extends TestCase
         $tools->assertSee('Automated Agent Service');
         $tools->assertSee('Blue Team');
         $tools->assertSee($service->title);
+
+        // Copy-paste terminal commands use the live scheme/host/port from
+        // request()->schemeAndHttpHost() instead of a hardcoded config URL.
+        $tools->assertSee('Invoke-WebRequest -Uri "http://localhost/my-tools/download-agent/', false);
+        $tools->assertSee('curl -fsSL "http://localhost/my-tools/download-agent/', false);
     }
 
     public function test_mock_payment_bypass_is_disabled_in_production(): void

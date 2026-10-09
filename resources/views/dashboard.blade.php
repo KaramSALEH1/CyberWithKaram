@@ -3,7 +3,7 @@
 @section('title', 'Command Center')
 
 @section('content')
-<div class="space-y-8">
+<div class="space-y-8 px-4 sm:px-6 lg:px-8 py-8">
     <div>
         <h1 class="text-3xl font-black">CyberLogia <span class="text-karam-green">Command Center</span></h1>
         <p class="text-gray-400 text-sm mt-1">Centralized control for services, payments, academy, and agents.</p>

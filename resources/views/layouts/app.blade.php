@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CyberLogia | @yield('title', 'Secure Today')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .text-karam-green {
             color: #008751;
@@ -22,12 +21,12 @@
     </style>
 </head>
 
-<body class="bg-gray-900 text-white font-sans selection:bg-karam-green flex flex-col min-h-screen">
+<body class="bg-gray-900 text-white font-sans selection:bg-karam-green flex flex-col min-h-screen px-4 sm:px-6 lg:px-8">
 
-    <nav class="p-6 border-b border-gray-800 sticky top-0 bg-gray-900/80 backdrop-blur-md z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="{{ route('home') }}" class="flex items-center gap-3">
-                <img src="{{ asset('images/logo.png') }}" alt="CyberLogia Logo" class="h-10">
+    <nav x-data="{ open: false }" class="p-4 sm:p-6 border-b border-gray-800 sticky top-0 bg-gray-900/80 backdrop-blur-md z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between max-h-16 overflow-hidden">
+            <a href="{{ route('home') }}" class="flex items-center gap-3 min-w-0">
+                <img src="{{ asset('images/logo.png') }}" alt="CyberLogia Logo" class="h-8 md:h-10 w-auto max-w-[180px] object-contain flex-shrink-0">
                 <span class="text-2xl font-bold tracking-tighter text-karam-green">CyberLogia</span>
             </a>
             <div class="hidden md:flex space-x-8 items-center text-sm font-medium">
@@ -35,7 +34,6 @@
                 <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">About</a>
                 <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Services</a>
                 <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Courses</a>
-                
                 @auth
                     <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">My Tools</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
@@ -47,7 +45,41 @@
                 @endauth
 
                 <a href="{{ route('contact') }}"
-                    class="bg-cyan-500 text-black px-5 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
+                    class="bg-cyan-500 text-black px-4 sm:px-5 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
+                    Us</a>
+            </div>
+
+            <!-- Hamburger menu toggle (mobile only) -->
+            <button type="button" @click="open = ! open"
+                class="block md:hidden p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 focus:outline-none transition"
+                :aria-expanded="open" aria-label="Toggle navigation menu">
+                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <path :class="{ 'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path :class="{ 'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Responsive Navigation Menu (mobile only) -->
+        <div :class="{ 'block': open, 'hidden': ! open }" class="hidden md:hidden max-w-7xl mx-auto pt-4">
+            <div class="flex flex-col gap-1 text-sm font-medium">
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Home</a>
+                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">About</a>
+                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Services</a>
+                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Courses</a>
+                @auth
+                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">My Tools</a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-left hover:text-red-400 transition py-2">Logout</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="hover:text-cyan-400 transition py-2">Login</a>
+                @endauth
+                <a href="{{ route('contact') }}"
+                    class="mt-2 w-full text-center bg-cyan-500 text-black px-4 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
                     Us</a>
             </div>
         </div>

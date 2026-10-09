@@ -3,7 +3,7 @@
 @section('title', $course->title.' Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6 px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-3xl font-black">{{ $course->title }}</h1>

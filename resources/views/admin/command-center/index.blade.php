@@ -1,14 +1,14 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="py-10 bg-gray-900 min-h-screen text-white">
-    <div class="max-w-7xl mx-auto px-6 space-y-8">
+<div class="py-10 bg-gray-900 min-h-screen text-white px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto space-y-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h1 class="text-3xl font-black">Admin <span class="text-karam-green">Command Center</span></h1>
             <span class="text-sm text-gray-400">Agents: {{ $agents->count() }} | Commands: {{ $commands->total() }}</span>
         </div>
 
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 sm:p-6">
             <h2 class="text-lg font-bold text-karam-green mb-4">Dispatch Command</h2>
             <form method="POST" action="{{ route('admin.command-center.commands.store') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 @csrf
@@ -27,11 +27,11 @@
             </form>
         </div>
 
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 sm:p-6">
             <h2 class="text-lg font-bold text-blue-400 mb-4">Command Activity</h2>
             <div class="space-y-3">
                 @forelse($commands as $command)
-                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-4">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div>
                                 <p class="font-bold">{{ $command->command_key }} <span class="text-xs text-gray-500">{{ $command->command_uuid }}</span></p>
