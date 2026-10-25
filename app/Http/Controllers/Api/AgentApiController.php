@@ -84,7 +84,9 @@ class AgentApiController extends Controller
 
         $service = Service::findOrFail($data['service_id']);
 
-        if (empty($service->script_code)) {
+        $scriptContent = $service->getScriptContent();
+
+        if (empty($scriptContent)) {
             return response()->json(['message' => 'No script configured for this service.'], 404);
         }
 
@@ -94,7 +96,7 @@ class AgentApiController extends Controller
         return response()->json([
             'service_id' => $service->id,
             'service_slug' => $service->slug,
-            'script_code' => $service->script_code,
+            'script_code' => $scriptContent,
         ])->withHeaders([
             'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
             'Pragma' => 'no-cache',

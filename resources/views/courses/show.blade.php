@@ -3,10 +3,10 @@
 @section('title', $course->title)
 
 @section('content')
-    <section class="py-20 bg-[#0a0a0a] min-h-screen">
+    <section class="py-20 bg-gray-900 min-h-screen">
         <div class="max-w-5xl mx-auto px-6">
             <!-- Premium Header -->
-            <div class="relative mb-20 p-12 bg-[#111] border border-white/5 rounded-[2.5rem] overflow-hidden">
+            <div class="relative mb-20 p-12 bg-gray-900 border border-gray-800 rounded-[2.5rem] overflow-hidden">
                 <div class="absolute -top-24 -right-24 h-64 w-64 bg-karam-green/10 blur-[100px] rounded-full"></div>
 
                 <div class="relative">
@@ -28,14 +28,14 @@
                 <!-- Lock Message -->
                 <div class="mb-20 relative group">
                     <div
-                        class="absolute -inset-1 bg-blue-600/20 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000">
+                        class="absolute -inset-1 bg-karam-green/20 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-1000">
                     </div>
                     <div
-                        class="relative bg-[#111] border border-blue-600/30 p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8">
+                        class="relative bg-gray-900 border border-gray-800 p-10 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-8">
                         <div class="flex items-center gap-6">
                             <div
-                                class="h-16 w-16 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-600/20">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none"
+                                class="h-16 w-16 bg-karam-green/10 rounded-2xl flex items-center justify-center border border-karam-green/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-karam-green" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -49,7 +49,7 @@
                             </div>
                         </div>
                         <a href="{{ route('courses.checkout', $course->slug) }}"
-                            class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black px-10 py-4 rounded-2xl transition shadow-[0_0_30px_rgba(37,99,235,0.3)] uppercase italic tracking-widest">
+                            class="w-full md:w-auto bg-karam-green hover:bg-karam-green/90 text-black font-black px-10 py-4 rounded-2xl transition shadow-[0_0_30px_rgba(0,135,81,0.3)] uppercase italic tracking-widest">
                             ENROLL NOW
                         </a>
                     </div>
@@ -65,7 +65,7 @@
 
                 @foreach ($course->modules as $module)
                     <div class="space-y-6">
-                        <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                        <div class="flex items-center justify-between border-b border-gray-800/5 pb-4">
                             <div class="flex flex-col">
                                 <h3 class="text-lg font-black text-gray-400 uppercase tracking-widest italic">
                                     {{ $module->title }}</h3>
@@ -96,7 +96,7 @@
 
                                 @if ($isAccessible)
                                     <a href="{{ route('lessons.show', [$course->slug, $lesson->slug]) }}"
-                                        class="group relative bg-[#111] border border-white/5 p-6 rounded-2xl flex items-center justify-between hover:border-karam-green/50 transition-all duration-300">
+                                        class="group relative bg-gray-900 border border-gray-800/5 p-6 rounded-2xl flex items-center justify-between hover:border-karam-green/50 transition-all duration-300">
                                         <div class="flex items-center gap-6">
                                             <div
                                                 class="h-12 w-12 bg-karam-green/5 rounded-xl flex items-center justify-center border border-karam-green/10 group-hover:border-karam-green/30 transition-colors">
@@ -127,10 +127,10 @@
                                     </a>
                                 @else
                                     <div
-                                        class="bg-[#111]/50 border border-white/5 p-6 rounded-2xl flex items-center justify-between opacity-75 group transition-all duration-300">
+                                        class="bg-gray-900/50 border border-gray-800/5 p-6 rounded-2xl flex items-center justify-between opacity-75 group transition-all duration-300">
                                         <div class="flex items-center gap-6">
                                             <div
-                                                class="h-12 w-12 bg-gray-800/50 rounded-xl flex items-center justify-center border border-white/5">
+                                                class="h-12 w-12 bg-gray-800/50 rounded-xl flex items-center justify-center border border-gray-800/5">
                                                 <span
                                                     class="font-mono text-sm text-gray-600">{{ str_pad($lesson->order_no, 2, '0', STR_PAD_LEFT) }}</span>
                                             </div>
@@ -162,7 +162,7 @@
                                                 Lesson</a>
                                         @elseif($module->price > 0)
                                             <a href="{{ route('modules.checkout', $module->id) }}"
-                                                class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white text-[10px] font-black px-4 py-2 rounded-lg border border-blue-600/20 transition-all uppercase italic">Buy
+                                                class="bg-karam-green-600/10 hover:bg-karam-green-600 text-karam-green-400 hover:text-white text-[10px] font-black px-4 py-2 rounded-lg border border-karam-green-600/20 transition-all uppercase italic">Buy
                                                 Module</a>
                                         @endif
                                     </div>

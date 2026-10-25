@@ -2,7 +2,7 @@
 @section('title', 'About CyberLogia')
 
 @section('content')
-    <div class="min-h-screen bg-[#050505] text-gray-100">
+    <div class="min-h-screen bg-gray-900 text-white">
         <!-- Hero -->
         <section class="relative py-24 px-6 lg:px-8 overflow-hidden">
             <div class="absolute -top-40 -right-40 w-[32rem] h-[32rem] rounded-full bg-karam-green/5 blur-3xl"></div>
@@ -29,7 +29,7 @@
         </section>
 
         <!-- Three pillars -->
-        <section class="py-16 px-6 lg:px-8 bg-gray-900/40 border-y border-white/5">
+        <section class="py-16 px-6 lg:px-8 bg-gray-800/50 border-y border-gray-800">
             <div class="max-w-7xl mx-auto">
                 <div class="text-center mb-14">
                     <h2 class="text-3xl md:text-4xl font-extrabold mb-3">Three agent families. One platform.</h2>
@@ -39,18 +39,18 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="group bg-[#0a0a0a] border border-white/5 hover:border-blue-400/40 rounded-2xl p-8 transition-all duration-300">
+                    <div class="group bg-gray-900 border border-gray-800 hover:border-karam-green/40 rounded-2xl p-8 transition-all duration-300">
                         <div class="text-4xl mb-5">🛡️</div>
-                        <h3 class="text-xl font-bold mb-3 text-blue-300">Blue Team</h3>
+                        <h3 class="text-xl font-bold mb-3 text-karam-green">Blue Team</h3>
                         <p class="text-gray-400 leading-relaxed mb-5 text-sm">
                             Continuous detection and hardening. Automated EDR &amp; threat hunting, CIS
                             Benchmark compliance, log collection with SIEM forwarding, and file integrity
                             monitoring.
                         </p>
-                        <span class="font-mono text-xs text-blue-400">4 agents</span>
+                        <span class="font-mono text-xs text-karam-green">4 agents</span>
                     </div>
 
-                    <div class="group bg-[#0a0a0a] border border-white/5 hover:border-red-400/40 rounded-2xl p-8 transition-all duration-300">
+                    <div class="group bg-gray-900 border border-gray-800 hover:border-karam-green/40 rounded-2xl p-8 transition-all duration-300">
                         <div class="text-4xl mb-5">🎯</div>
                         <h3 class="text-xl font-bold mb-3 text-red-300">Red Team</h3>
                         <p class="text-gray-400 leading-relaxed mb-5 text-sm">
@@ -61,7 +61,7 @@
                         <span class="font-mono text-xs text-red-400">3 agents</span>
                     </div>
 
-                    <div class="group bg-[#0a0a0a] border border-white/5 hover:border-sky-400/40 rounded-2xl p-8 transition-all duration-300">
+                    <div class="group bg-gray-900 border border-gray-800 hover:border-karam-green/40 rounded-2xl p-8 transition-all duration-300">
                         <div class="text-4xl mb-5">☁️</div>
                         <h3 class="text-xl font-bold mb-3 text-sky-300">Cloud Security</h3>
                         <p class="text-gray-400 leading-relaxed mb-5 text-sm">
@@ -113,11 +113,11 @@
                         </ol>
                     </div>
 
-                    <div class="bg-[#0a0a0a] border border-white/5 rounded-2xl p-2">
+                    <div class="bg-gray-900 border border-white/5 rounded-2xl p-2">
                         <div
                             class="rounded-xl bg-gray-950 border border-white/5 p-8 flex flex-col items-center justify-center min-h-[22rem]">
                             <img src="{{ asset('images/logo.png') }}" alt="CyberLogia"
-                                class="h-40 w-auto max-w-full object-contain opacity-80 drop-shadow-[0_0_35px_rgba(0,242,96,0.25)]">
+                                class="h-40 w-auto max-w-full object-contain opacity-80 drop-shadow-[0_0_35px_rgba(0,135,81,0.25)]">
                             <p class="font-mono text-xs text-karam-green tracking-[0.3em] uppercase mt-8">
                                 Secure Today · Protect Tomorrow
                             </p>
@@ -128,7 +128,7 @@
         </section>
 
         <!-- CTA -->
-        <section class="py-20 px-6 lg:px-8 bg-gray-900/40 border-t border-white/5">
+        <section class="py-20 px-6 lg:px-8 bg-gray-800/50 border-t border-gray-800">
             <div class="max-w-3xl mx-auto text-center">
                 <h2 class="text-3xl md:text-4xl font-extrabold mb-4">Ready to automate your defence?</h2>
                 <p class="text-gray-400 mb-8">
@@ -136,7 +136,7 @@
                 </p>
                 <div class="flex flex-wrap justify-center gap-4">
                     <a href="{{ route('services') }}"
-                        class="px-10 py-4 rounded-xl bg-karam-green text-black font-bold hover:opacity-90 transition shadow-[0_0_30px_rgba(0,242,96,0.25)]">
+                        class="px-10 py-4 rounded-xl bg-karam-green text-black font-bold hover:opacity-90 transition shadow-[0_0_30px_rgba(0,135,81,0.25)]">
                         Explore Services
                     </a>
                     <a href="{{ route('contact') }}"

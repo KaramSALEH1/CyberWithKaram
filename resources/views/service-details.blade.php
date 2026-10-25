@@ -3,18 +3,18 @@
 @section('title', $service->title)
 
 @section('content')
-    <div class="min-h-screen bg-[#050505] text-gray-100 font-sans" x-data="{ openDocs: false }">
+    <div class="min-h-screen bg-gray-900 text-white font-sans" x-data="{ openDocs: false }">
         <!-- Hero Section -->
-        <section class="relative py-20 md:py-32 px-6 lg:px-8 overflow-hidden bg-[#050505] mesh-gradient">
+        <section class="relative py-20 md:py-32 px-6 lg:px-8 overflow-hidden bg-gray-900 mesh-gradient">
             <div class="relative max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
                 <div class="flex-1 text-center md:text-left">
                     @php
                         $categoryStyles = [
-                            'Blue Team' => 'bg-blue-500/10 border-blue-400/30 text-blue-300',
-                            'Red Team' => 'bg-red-500/10 border-red-400/30 text-red-300',
-                            'Cloud Security' => 'bg-sky-500/10 border-sky-400/30 text-sky-300',
+                            'Blue Team' => 'bg-karam-green-500/10 border-karam-green-400/30 text-karam-green-300',
+                            'Red Team' => 'bg-karam-red-500/10 border-karam-red-400/30 text-karam-red-300',
+                            'Cloud Security' => 'bg-karam-green-500/10 border-karam-green-400/30 text-karam-green-300',
                         ];
-                        $badgeStyle = $categoryStyles[$service->category] ?? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
+                        $badgeStyle = $categoryStyles[$service->category] ?? 'bg-karam-green-500/10 border-karam-green-400/30 text-karam-green-300';
                     @endphp
 
                     <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-5">
@@ -37,7 +37,7 @@
                             </span>
                         @endif
 
-                        <span class="bg-cyan-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                        <span class="bg-karam-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-full">
                             @if ($service->is_available)
                                 Available Now
                             @else
@@ -51,19 +51,19 @@
                     </h1>
                     <div class="flex flex-wrap items-center gap-4 mt-8">
                         @if ($service->requiresPayment())
-                            <div class="bg-[#0a0a0a] border border-cyan-500/30 rounded-2xl px-6 py-4">
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4">
                                 <div class="flex items-baseline gap-2">
                                     <span
                                         class="text-3xl font-mono font-black text-white">{{ number_format((float) $service->price, 0) }}</span>
                                     <span class="text-sm font-medium text-gray-500 uppercase">SYP</span>
                                 </div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-sm font-mono font-bold text-cyan-400">${{ number_format($service->usdPrice(), 0) }}</span>
+                                    <span class="text-sm font-mono font-bold text-karam-green">${{ number_format($service->usdPrice(), 0) }}</span>
                                     <span class="text-[10px] text-gray-500 uppercase tracking-widest">USD equivalent / month</span>
                                 </div>
                             </div>
                         @else
-                            <div class="bg-[#0a0a0a] border border-cyan-500/30 rounded-2xl px-6 py-4">
+                            <div class="bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4">
                                 <span class="text-2xl font-mono font-bold text-gray-300 italic">Custom Quote</span>
                             </div>
                         @endif
@@ -76,8 +76,8 @@
                     <!-- Action Buttons (Hero) -->
                     <div class="flex flex-wrap gap-4 mt-8 justify-center md:justify-start">
                         @guest
-                            <a href="{{ route('register') }}" class="btn-primary-cyan">Get Started</a>
-                            <a href="{{ route('login') }}" class="btn-secondary-gray">Login to Access</a>
+                            <a href="{{ route('register') }}" class="btn-primary-karam">Get Started</a>
+                            <a href="{{ route('login') }}" class="btn-secondary-karam">Login to Access</a>
                         @else
                             @php
                                 $canDownload = $hasApprovedAccess || Auth::user()->is_admin;
@@ -91,15 +91,15 @@
 
                             @if ($canDownload)
                                 <a href="{{ $downloadUrl }}"
-                                    class="btn-primary-cyan px-10 py-4 text-lg shadow-[0_0_40px_rgba(0,242,255,0.3)] hover:shadow-[0_0_50px_rgba(0,242,255,0.5)] transform hover:-translate-y-1">
+                                    class="bg-karam-green hover:bg-karam-green/90 text-black font-bold px-10 py-4 text-lg shadow-[0_0_40px_rgba(0,135,81,0.3)] hover:shadow-[0_0_50px_rgba(0,135,81,0.5)] transition-all transform hover:-translate-y-1">
                                     Download Agent
                                 </a>
                                 <a href="{{ route('my-tools.index') }}"
-                                    class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
+                                    class="px-8 py-4 bg-transparent border border-gray-700 text-gray-300 hover:text-white hover:border-karam-green font-bold rounded-xl transition-all">
                                     Deployment Commands
                                 </a>
                                 <button @click="openDocs = true"
-                                    class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
+                                    class="px-8 py-4 bg-transparent border border-gray-700 text-gray-300 hover:text-white hover:border-karam-green font-bold rounded-xl transition-all">
                                     View Documentation
                                 </button>
                                 @if (Auth::user()->is_admin && !$hasApprovedAccess)
@@ -110,11 +110,11 @@
                             @else
                                 @if ($service->is_available)
                                     <a href="{{ route('services.pay', $service->slug) }}"
-                                        class="px-8 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(0,242,255,0.4)] transition-all transform hover:scale-105">
+                                        class="px-8 py-4 bg-karam-green hover:bg-karam-green/90 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(0,135,81,0.4)] transition-all transform hover:scale-105">
                                         Request Access
                                     </a>
                                     <button @click="openDocs = true"
-                                        class="px-8 py-4 bg-transparent border border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-500/10 font-bold rounded-xl transition-all">
+                                        class="px-8 py-4 bg-transparent border border-gray-700 text-gray-300 hover:text-white hover:border-karam-green font-bold rounded-xl transition-all">
                                         View Documentation
                                     </button>
                                 @else
@@ -137,14 +137,14 @@
 
         <!-- Documentation Modal -->
         <div x-show="openDocs"
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/80 backdrop-blur-md"
             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95"
             x-transition:enter-end="opacity-100 scale-100" x-cloak>
 
             <div @click.away="openDocs = false"
-                class="bg-[#0a0a0a] border border-cyan-500/30 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,242,255,0.15)] flex flex-col">
-                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-cyan-500/5">
-                    <h3 class="text-xl font-mono text-cyan-400">Technical Documentation: {{ $service->title }}</h3>
+                class="bg-gray-900 border border-karam-green/30 w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,135,81,0.15)] flex flex-col">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-karam-green/5">
+                    <h3 class="text-xl font-mono text-karam-green">Technical Documentation: {{ $service->title }}</h3>
                     <button @click="openDocs = false" class="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
 
@@ -168,34 +168,34 @@
                 <h2 class="text-4xl font-bold text-center mb-12 text-white">Key Features</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">⚡</div>
+                        <div class="text-4xl text-karam-green mb-4">⚡</div>
                         <h3 class="text-xl font-semibold mb-2">Fast Execution</h3>
                         <p class="text-gray-400">Leverage optimized scripts for rapid task completion and immediate results.
                         </p>
                     </div>
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">👻</div>
+                        <div class="text-4xl text-karam-green mb-4">👻</div>
                         <h3 class="text-xl font-semibold mb-2">Stealth Mode</h3>
                         <p class="text-gray-400">Operate discreetly with advanced evasion techniques to avoid detection.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">🔌</div>
+                        <div class="text-4xl text-karam-green mb-4">🔌</div>
                         <h3 class="text-xl font-semibold mb-2">API Access</h3>
                         <p class="text-gray-400">Integrate seamlessly with your existing systems using our robust API.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">🛡️</div>
+                        <div class="text-4xl text-karam-green mb-4">🛡️</div>
                         <h3 class="text-xl font-semibold mb-2">Robust Security</h3>
                         <p class="text-gray-400">Built with security in mind, protecting your operations and data.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">🌍</div>
+                        <div class="text-4xl text-karam-green mb-4">🌍</div>
                         <h3 class="text-xl font-semibold mb-2">Global Reach</h3>
                         <p class="text-gray-400">Deploy and manage agents across diverse geographical locations
                             effortlessly.</p>
                     </div>
                     <div class="feature-card">
-                        <div class="text-4xl text-cyan-500 mb-4">📊</div>
+                        <div class="text-4xl text-karam-green mb-4">📊</div>
                         <h3 class="text-xl font-semibold mb-2">Detailed Reporting</h3>
                         <p class="text-gray-400">Gain insights with comprehensive reports and real-time analytics.</p>
                     </div>
@@ -214,46 +214,46 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     <div class="how-it-works-step text-left">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="text-5xl text-cyan-400 font-black">1.</div>
+                            <div class="text-5xl text-karam-green font-black">1.</div>
                             <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500">Purchase</span>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">Purchase Service</h3>
                         <p class="text-gray-400 mb-4">Select the agent you need and pay with Sham Cash or
                             bank transfer.</p>
-                        <p class="text-xs font-mono text-cyan-400">
+                        <p class="text-xs font-mono text-karam-green">
                             {{ number_format((float) $service->price, 0) }} SYP / month
                         </p>
                     </div>
                     <div class="how-it-works-step text-left">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="text-5xl text-cyan-400 font-black">2.</div>
+                            <div class="text-5xl text-karam-green font-black">2.</div>
                             <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500">Activation</span>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">Approval &amp; License</h3>
                         <p class="text-gray-400 mb-4">Our team verifies your receipt and issues a license key
                             valid for 30 days.</p>
-                        <p class="text-xs font-mono text-cyan-400">Issued in /my-tools</p>
+                        <p class="text-xs font-mono text-karam-green">Issued in /my-tools</p>
                     </div>
                     <div class="how-it-works-step text-left">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="text-5xl text-cyan-400 font-black">3.</div>
+                            <div class="text-5xl text-karam-green font-black">3.</div>
                             <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500">Download</span>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">Download Agent</h3>
                         <p class="text-gray-400 mb-4">Download your personalised
-                            <code class="text-cyan-400">agent_bootstrapper.py</code> with the service ID and
+                            <code class="text-karam-green">agent_bootstrapper.py</code> with the service ID and
                             license key pre-configured.</p>
-                        <p class="text-xs font-mono text-cyan-400">One file, cross-platform</p>
+                        <p class="text-xs font-mono text-karam-green">One file, cross-platform</p>
                     </div>
                     <div class="how-it-works-step text-left">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="text-5xl text-cyan-400 font-black">4.</div>
+                            <div class="text-5xl text-karam-green font-black">4.</div>
                             <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500">Run</span>
                         </div>
                         <h3 class="text-xl font-semibold mb-2">Run &amp; Monitor</h3>
                         <p class="text-gray-400 mb-4">Run one command. The agent fetches its workload,
                             executes it and reports back every 60 seconds.</p>
-                        <p class="text-xs font-mono text-cyan-400">python agent_bootstrapper.py</p>
+                        <p class="text-xs font-mono text-karam-green">python agent_bootstrapper.py</p>
                     </div>
                 </div>
             </div>
@@ -276,9 +276,9 @@
                                 <div>
                                     <h3 class="text-lg font-semibold mb-2">Download the bootstrapper</h3>
                                     <p class="text-gray-400 mb-4">
-                                        Open <a href="{{ route('my-tools.index') }}" class="text-cyan-400 hover:underline">My Tools</a>
+                                        Open <a href="{{ route('my-tools.index') }}" class="text-karam-green hover:underline">My Tools</a>
                                         and download your personalised
-                                        <code class="text-cyan-400">agent_bootstrapper.py</code>, or use the
+                                        <code class="text-karam-green">agent_bootstrapper.py</code>, or use the
                                         direct link below (replace the key with your license).
                                     </p>
                                     <code class="code-block">{{ $baseUrl ?? url('/') }}/my-tools/download-agent/{{ $service->id }}/YOUR-LICENSE-KEY</code>
@@ -315,28 +315,28 @@
                             </div>
                         </div>
                     @else
-                        <div class="bg-[#0a0a0a] border border-cyan-500/20 rounded-2xl p-8 text-center">
+                        <div class="bg-gray-900 border border-karam-green/20 rounded-2xl p-8 text-center">
                             <p class="text-gray-400 mb-6">
                                 Purchase this service to unlock the installation guide and download your
                                 personalised agent.
                             </p>
                             @if ($service->is_available)
                                 <a href="{{ route('services.pay', $service->slug) }}"
-                                    class="btn-primary-cyan inline-block">Purchase &amp; Unlock Agent</a>
+                                    class="btn-primary-karam inline-block">Purchase &amp; Unlock Agent</a>
                             @else
                                 <button disabled class="btn-disabled">Service Locked</button>
                             @endif
                         </div>
                     @endif
                 @else
-                    <div class="bg-[#0a0a0a] border border-cyan-500/20 rounded-2xl p-10 text-center">
+                    <div class="bg-gray-900 border border-karam-green/20 rounded-2xl p-10 text-center">
                         <h3 class="text-2xl font-bold mb-3 text-white">Ready to deploy this agent?</h3>
                         <p class="text-gray-400 mb-8">
                             Create your free CyberLogia account to purchase this service and receive your
                             personalised installation guide.
                         </p>
                         <div class="flex flex-wrap justify-center gap-4">
-                            <a href="{{ route('register') }}" class="btn-primary-cyan">Create Account</a>
+                            <a href="{{ route('register') }}" class="btn-primary-karam">Create Account</a>
                             <a href="{{ route('login') }}" class="btn-secondary-gray">Login</a>
                         </div>
                     </div>
@@ -377,17 +377,17 @@
             background-position: center;
         }
 
-        .btn-glowing-cyan {
-            @apply bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6), 0 0 30px rgba(0, 255, 255, 0.4);
+        .btn-glowing-karam {
+            @apply bg-karam-green hover:bg-karam-green/90 text-black font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg;
+            box-shadow: 0 0 15px rgba(0, 135, 81, 0.6), 0 0 30px rgba(0, 135, 81, 0.4);
         }
 
-        .btn-primary-cyan {
-            @apply bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg;
+        .btn-primary-karam {
+            @apply bg-karam-green hover:bg-karam-green/90 text-black font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg;
         }
 
         .btn-secondary-gray {
-            @apply bg-gray-700 hover:bg-gray-600 text-gray-200 font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out border border-gray-600;
+            @apply bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out border border-gray-700;
         }
 
         .btn-disabled {
@@ -395,7 +395,7 @@
         }
 
         .feature-card {
-            @apply bg-gray-800/70 border border-gray-700 rounded-xl p-6 text-center hover:border-cyan-500 transition duration-300;
+            @apply bg-gray-800/70 border border-gray-700 rounded-xl p-6 text-center hover:border-karam-green transition duration-300;
         }
 
         .how-it-works-step {
@@ -403,15 +403,15 @@
         }
 
         .install-step {
-            @apply bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 flex items-start gap-5;
+            @apply bg-gray-900 border border-white/5 rounded-2xl p-6 flex items-start gap-5;
         }
 
         .install-step-number {
-            @apply flex-shrink-0 w-9 h-9 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 font-mono font-bold flex items-center justify-center;
+            @apply flex-shrink-0 w-9 h-9 rounded-full bg-karam-green/15 border border-karam-green-400/30 text-karam-green-300 font-mono font-bold flex items-center justify-center;
         }
 
         .code-block {
-            @apply block bg-black/80 border border-cyan-500/20 p-4 rounded-xl text-[11px] text-green-400 font-mono break-all whitespace-pre-wrap;
+            @apply block bg-gray-900/80 border border-karam-green/20 p-4 rounded-xl text-[11px] text-green-400 font-mono break-all whitespace-pre-wrap;
         }
 
         .service-docs h3 {
@@ -427,7 +427,7 @@
         }
 
         .service-docs li {
-            @apply marker:text-cyan-400;
+            @apply marker:text-karam-green;
         }
 
         .service-docs strong {
@@ -446,7 +446,7 @@
 
         .prose pre::-webkit-scrollbar-thumb {
             background: #00bcd4;
-            /* Cyan color */
+            /* Karam color */
             border-radius: 10px;
         }
 

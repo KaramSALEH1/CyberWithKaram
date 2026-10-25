@@ -25,7 +25,6 @@ class UpdateServiceRequest extends FormRequest
             'description' => ['required', 'string'],
             'full_description' => ['nullable', 'string'],
             'price' => ['nullable', 'numeric', 'min:0'],
-            'script_code' => ['nullable', 'string'],
             'payment_instructions' => ['nullable', 'string'],
             'is_automated' => ['nullable', 'boolean'],
             'is_visible' => ['nullable', 'boolean'],

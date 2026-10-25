@@ -40,10 +40,6 @@
         <label class="text-xs uppercase text-gray-400">Full Description</label>
         <textarea name="full_description" rows="6" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3">{{ old('full_description', $service?->full_description) }}</textarea>
     </div>
-    <div class="md:col-span-2">
-        <label class="text-xs uppercase text-gray-400">Python Script / Payload</label>
-        <textarea name="script_code" rows="10" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-3 font-mono" placeholder="print('Service payload here')">{{ old('script_code', $service?->script_code) }}</textarea>
-    </div>
     <label class="inline-flex items-center gap-2">
         <input type="hidden" name="is_visible" value="0">
         <input type="checkbox" name="is_visible" value="1" @checked(old('is_visible', $service?->is_visible ?? true)) class="rounded border-gray-600 bg-gray-900">

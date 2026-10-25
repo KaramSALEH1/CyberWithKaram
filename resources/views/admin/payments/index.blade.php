@@ -17,14 +17,14 @@
                             <div class="flex items-center gap-2 mb-1">
                                 <p class="font-bold text-lg">{{ $payment->productTitle() }}</p>
                                 <span
-                                    class="text-[10px] font-black uppercase px-2 py-0.5 rounded {{ $payment->product_type === 'course' ? 'bg-blue-900/30 text-blue-400 border border-blue-800' : 'bg-gray-800 text-gray-400 border border-gray-700' }}">
+                                    class="text-[10px] font-black uppercase px-2 py-0.5 rounded {{ $payment->product_type === 'course' ? 'bg-karam-green-900/30 text-karam-green-400 border border-karam-green-800' : 'bg-gray-800 text-gray-400 border border-gray-700' }}">
                                     {{ $payment->product_type }}
                                 </span>
                             </div>
                             <p class="text-sm text-gray-400">User: {{ $payment->user?->name }}
                                 ({{ $payment->user?->email }})</p>
                             <p class="text-xs text-gray-500 mt-1">Status: <span
-                                    class="uppercase {{ $payment->status === 'approved' ? 'text-karam-green' : ($payment->status === 'rejected' ? 'text-red-500' : 'text-cyan-400') }}">{{ $payment->status }}</span>
+                                    class="uppercase {{ $payment->status === 'approved' ? 'text-karam-green' : ($payment->status === 'rejected' ? 'text-red-500' : 'text-karam-green') }}">{{ $payment->status }}</span>
                             </p>
                             <p class="text-xs text-gray-500">Amount:
                                 {{ number_format((float) $payment->transaction_amount, 0) }} SYP (Expected:

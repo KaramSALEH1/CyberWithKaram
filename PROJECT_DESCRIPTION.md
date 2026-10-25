@@ -599,3 +599,504 @@ composer test       # run PHPUnit
 | **Storefront views** | `resources/views/services.blade.php`, `resources/views/service-details.blade.php`, `resources/views/my-tools.blade.php` |
 | Tests / expected behavior | `tests/Feature/SaasPlatformTest.php`, `tests/Feature/CommandCenterAndAgentFlowTest.php` |
 
+---
+
+## 18. Action-to-Code Traceability Trees
+
+This section maps every major user/admin action through the full stack:
+
+**Front-end (Route → View)** → **Controller** → **(Service)** → **Model** → **Database table**
+
+Use it to locate every file touched by a given action, front-end to back-end.
+
+### Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| `└─` / `├─` | Tree branch (parent → child call) |
+| `[Route]` | Route definition + name (see `routes/web.php`, `routes/api.php`, `routes/auth.php`) |
+| `{View}` | Blade template in `resources/views/` |
+| `Controller` | `app/Http/Controllers/...` |
+| `Service` | `app/Services/...` |
+| `Model` | `app/Models/...` |
+| `DB` | Database table (see `database/migrations/`) |
+| `Job` | `app/Jobs/...` (queued) |
+| `File` | Non-DB file written/read (e.g. Python agent template) |
+
+---
+
+### 18.1 Public: Browse Homepage & Services Catalog
+
+```
+Browse Services / Homepage
+├─ [Route]  GET /  (name: home)          routes/web.php
+│           GET /services (name: services) routes/web.php
+│           (closure controller inline in web.php)
+│           Model: App\Models\Service
+│           DB:    services
+└─ {View}   resources/views/welcome.blade.php
+            resources/views/services.blade.php
+            resources/views/layouts/app.blade.php   (shared layout)
+            resources/views/layouts/navigation.blade.php
+            resources/views/components/*             (reusable UI bits)
+```
+
+---
+
+### 18.2 Public + Auth: View Service Details
+
+```
+View Service Details (/services/{slug})
+├─ [Route]  GET /services/{service:slug}  (name: service.show)  routes/web.php
+│           (closure controller inline in web.php)
+│           ├─ Model: App\Models\Service              (route-model binding by slug)
+│           ├─ Model: App\Models\Payment              (approved payment for this user+service)
+│           │   DB: payments
+│           └─ DB:    services
+├─ Service: App\Services\Payment\PaymentVerificationService
+│           (userHasApprovedAccess / getApprovedPayment helpers)
+└─ {View}   resources/views/service-details.blade.php
+            resources/views/layouts/app.blade.php
+```
+
+---
+
+### 18.3 Customer: Checkout & Submit Manual Payment
+
+```
+Checkout & Submit Payment (service / course / module / lesson)
+├─ [Route]  GET  /services/{slug}/pay             (name: services.pay)     routes/web.php
+│           GET  /courses/{slug}/checkout         (name: courses.checkout)
+│           GET  /academy/modules/{id}/checkout   (name: modules.checkout)
+│           GET  /academy/lessons/{slug}/checkout (name: lessons.checkout)
+│           POST /payment/submit                  (name: payments.submit)
+│           (auth + verified middleware)
+│
+├─ Controller: App\Http\Controllers\PaymentController
+│   ├─ showCheckout()        → shows the checkout form
+│   │   ├─ Model: App\Models\Service / Course / Module / Lesson
+│   │   │   DB: services / courses / modules / lessons
+│   │   ├─ Model: App\Models\Payment              (approved/pending for this user)
+│   │   │   DB: payments
+│   │   └─ {View} resources/views/payments/checkout.blade.php
+│   └─ storePayment()        → validates receipt, creates pending Payment, sends Telegram
+│       ├─ Request: App\Http\Requests\Payment\StorePaymentDetailsRequest
+│       ├─ Service: App\Services\Payment\PaymentVerificationService
+│       │   (creates Payment, status = pending)
+│       ├─ Service: App\Services\Telegram\TelegramService  (new receipt alert)
+│       ├─ Model: App\Models\Payment              DB: payments
+│       ├─ Model: App\Models\Service / Course / Module / Lesson  (price lookup)
+│       └─ redirect back to checkout page
+│
+└─ (Optional dev-only mock)
+    [Route] GET /payment/mock-success/{type}/{slug}  (name: payment.mock-global-success)
+    Controller: PaymentController@mockGlobalPaymentSuccess  (404 in production)
+    Service: PaymentVerificationService@approve  (mints license key + Entitlement)
+```
+---
+
+### 18.4 Admin: Approve / Reject a Payment
+
+```
+Approve / Reject Payment (Admin Panel)
+├─ [Route]  GET    /admin/payments                    (name: admin.payments.index)   routes/web.php
+│           GET    /admin/payments/{payment}          (name: admin.payments.show)
+│           POST   /admin/payments/{payment}/approve  (name: admin.payments.approve)
+│           POST   /admin/payments/{payment}/reject   (name: admin.payments.reject)
+│           (auth + verified + admin middleware)
+│
+├─ Controller: App\Http\Controllers\Admin\PaymentController
+│   ├─ index()     → list payments  → {View} resources/views/admin/payments/index.blade.php
+│   ├─ show()      → single payment → {View} resources/views/admin/payments/show.blade.php
+│   ├─ approve()   → PaymentVerificationService::approve()
+│   └─ reject()    → PaymentVerificationService::reject()
+│
+├─ Service: App\Services\Payment\PaymentVerificationService
+│   ├─ approve():  Payment status → approved, expires_at = +30 days,
+│   │              license_key = CWK-<16 chars> (services only),
+│   │              Entitlement::updateOrCreate() (courses/modules/lessons),
+│   │              ActionLogService::log()  → DB: action_logs
+│   │              TelegramService::sendMessage()  (approval alert)
+│   └─ reject():   Payment status → rejected, ActionLogService::log()
+│
+├─ Model: App\Models\Payment              DB: payments
+├─ Model: App\Models\User                 DB: users
+├─ Model: App\Models\Service / Course / Module / Lesson  (product title lookup)
+├─ Model: App\Models\Entitlement          DB: entitlements
+├─ Model: App\Models\ActionLog            DB: action_logs
+└─ Telegram: config/telegram.php + App\Services\Telegram\TelegramService
+```
+
+---
+
+### 18.5 Customer: My Tools & Download Agent Bootstrapper
+
+```
+My Tools / Download Agent (/my-tools, /my-tools/download-agent/{id}/{key})
+├─ [Route]  GET  /my-tools                                    (name: my-tools.index)  routes/web.php
+│           GET  /my-tools/download-agent/{service_id}/{license_key}  (name: my-tools.download-agent)
+│           (auth middleware for index; download verified by licence key only, no session)
+│
+├─ Controller: App\Http\Controllers\UserToolController
+│   ├─ index()  → list approved service payments, (re)generate Sanctum agent-api token
+│   │   ├─ Model: App\Models\Payment       DB: payments  (with 'service')
+│   │   ├─ Model: App\Models\Service       DB: services
+│   │   ├─ Model: App\Models\User          DB: users  (personal_access_tokens)
+│   │   └─ {View} resources/views/my-tools.blade.php
+│   └─ downloadAgent()  → validate licence key (approved, not expired)
+│       ├─ Model: App\Models\Payment       DB: payments
+│       ├─ Model: App\Models\Service       DB: services
+│       ├─ File:  stubs/agent_bootstrapper.py  (rendered Python agent)
+│       └─ response: text/x-python attachment agent_bootstrapper.py
+│
+└─ DB:    payments, services, personal_access_tokens
+```
+
+---
+
+### 18.6 Agent API (Legacy, Sanctum): Fetch Script / Heartbeat / Token
+
+```
+Licensed Agent API (Sanctum bearer token)
+├─ [Route]  GET  /api/fetch-script     (throttle: agent-script)   routes/api.php
+│           POST /api/heartbeat        (throttle: api)
+│           POST /api/agent/token
+│           (auth:sanctum middleware)
+│
+├─ Controller: App\Http\Controllers\Api\AgentApiController
+│   ├─ fetchScript()   → returns executable Python script_code for the licence
+│   │   ├─ Model: App\Models\Payment        DB: payments  (licence + expiry check)
+│   │   ├─ Model: App\Models\Service        DB: services  (script_code payload)
+│   │   └─ Model: App\Models\AgentHeartbeat DB: agent_heartbeats
+│   ├─ heartbeat()     → record agent heartbeat
+│   │   └─ Model: App\Models\AgentHeartbeat DB: agent_heartbeats
+│   └─ createToken()   → issue Sanctum personal access token
+│       └─ DB: personal_access_tokens
+│
+└─ DB: payments, services, agent_heartbeats, personal_access_tokens
+```
+---
+
+### 18.7 Agent v1 Protocol: Register / Heartbeat / Poll / Result
+
+```
+Agent v1 Protocol (X-Agent-Key + hashed bearer token)
+├─ [Route]  POST /api/v1/agents/register   routes/api.php
+│           POST /api/v1/agents/heartbeat
+│           POST /api/v1/agents/poll
+│           POST /api/v1/agents/result
+│           (prefix v1/agents, throttle: agent-auth, middleware agent.auth)
+│           (legacy alias: /api/v1/agent/*)
+│
+├─ Controller: App\Http\Controllers\Api\AgentController
+│   ├─ register()   → Agent::create / update  DB: agents
+│   ├─ heartbeat()  → AgentHeartbeat::create  DB: agent_heartbeats
+│   ├─ poll()       → fetch pending AgentCommand  DB: agent_commands
+│   └─ result()     → AgentCommandResult::create  DB: agent_command_results
+│
+├─ Service: App\Services\Agent\AgentProtocolService
+├─ Model: App\Models\Agent              DB: agents
+├─ Model: App\Models\AgentCommand       DB: agent_commands
+├─ Model: App\Models\AgentCommandResult DB: agent_command_results
+├─ Model: App\Models\AgentHeartbeat     DB: agent_heartbeats
+├─ Model: App\Models\AgentStatus        DB: agent_statuses
+└─ Middleware: App\Http\Middleware\AuthenticateAgent
+```
+
+---
+
+### 18.8 Admin: Command Center – Queue / Cancel Command
+
+```
+Command Center (Admin Fleet Management)
+├─ [Route]  GET     /admin/command-center                          (name: admin.command-center.index)  routes/web.php
+│           POST    /admin/command-center/commands                 (name: admin.command-center.commands.store)
+│           POST    /admin/command-center/commands/{command}/cancel (name: admin.command-center.commands.cancel)
+│           (auth + verified + admin middleware)
+│
+├─ Controller: App\Http\Controllers\Admin\CommandCenterController
+│   ├─ index()   → list agents + commands
+│   │   ├─ Model: App\Models\Agent           DB: agents
+│   │   ├─ Model: App\Models\AgentCommand    DB: agent_commands  (with result, requester)
+│   │   └─ {View} resources/views/admin/command-center/index.blade.php
+│   ├─ store()   → CommandDispatchService::dispatch()  (queues command)
+│   └─ cancel()  → CommandDispatchService::cancel()
+│
+├─ Service: App\Services\CommandCenter\CommandDispatchService
+│           App\Services\CommandCenter\CommandSigningService
+│
+├─ Job:  App\Jobs\DispatchAgentCommandJob   App\Jobs\ProcessAgentResultJob
+│
+├─ Model: App\Models\Agent           DB: agents
+├─ Model: App\Models\AgentCommand    DB: agent_commands
+└─ Policy: App\Policies\AgentCommandPolicy
+```
+
+---
+
+### 18.9 Customer: Browse Academy Courses & Lessons
+
+```
+Academy Storefront (Courses → Modules → Lessons)
+├─ [Route]  GET  /courses                              (name: courses)                 routes/web.php
+│           GET  /courses/{course:slug}                (name: courses.show)
+│           GET  /courses/{course:slug}/lessons/{lesson:slug}  (name: lessons.show)
+│
+├─ Controller: App\Http\Controllers\CourseController
+│   ├─ index()     → active courses  → {View} resources/views/courses/index.blade.php
+│   │   └─ Model: App\Models\Course          DB: courses  (with modules.lessons)
+│   ├─ show()      → course detail   → {View} resources/views/courses/show.blade.php
+│   │   ├─ Model: App\Models\Course          DB: courses
+│   │   └─ Service: App\Services\Academy\EntitlementService  (userHasCourseAccess)
+│   └─ showLesson()→ lesson detail  → {View} resources/views/lessons/show.blade.php
+│       ├─ Model: App\Models\Course   DB: courses
+│       ├─ Model: App\Models\Lesson   DB: lessons  (with module.course)
+│       └─ Service: EntitlementService  (userHasLessonAccess; is_free bypass)
+│
+├─ Model: App\Models\Course     DB: courses
+├─ Model: App\Models\Module     DB: modules
+├─ Model: App\Models\Lesson     DB: lessons
+├─ Model: App\Models\Entitlement  DB: entitlements  (access check)
+└─ Service: App\Services\Academy\EntitlementService
+```
+---
+
+### 18.10 Admin: Academy CRUD (Course / Module / Lesson)
+
+```
+Admin Academy (Course / Module / Lesson CRUD)
+├─ [Route]  (all under /admin/academy, auth + verified + admin)  routes/web.php
+│   GET    /admin/academy                                        (admin.academy.index)
+│   POST   /admin/academy/course/store                           (admin.course.store)
+│   GET    /admin/academy/course/{course}/edit                   (admin.course.edit)
+│   PUT    /admin/academy/course/{course}                        (admin.course.update)
+│   DELETE /admin/academy/course/{course}                        (admin.course.delete)
+│   GET    /admin/academy/courses/{course}                       (admin.course.show)
+│   POST   /admin/academy/module/store                           (admin.module.store)
+│   GET    /admin/academy/module/{module}/edit                   (admin.module.edit)
+│   PUT    /admin/academy/module/{module}                        (admin.module.update)
+│   DELETE /admin/academy/module/{module}                        (admin.module.delete)
+│   POST   /admin/academy/lesson/store                           (admin.lesson.store)
+│   GET    /admin/academy/lesson/{lesson}/edit                   (admin.lesson.edit)
+│   PUT    /admin/academy/lesson/{lesson}                        (admin.lesson.update)
+│   DELETE /admin/academy/lesson/{lesson}                        (admin.lesson.delete)
+│
+├─ Controller: App\Http\Controllers\AcademyController
+│   ├─ index()   → {View} resources/views/admin/acade/index.blade.php
+│   │   └─ Model: App\Models\Course  DB: courses  (with modules.lessons)
+│   ├─ storeCourse()/updateCourse()/destroyCourse()
+│   │   └─ Model: App\Models\Course  DB: courses
+│   ├─ storeModule()/updateModule()/destroyModule()
+│   │   └─ Model: App\Models\Module  DB: modules
+│   ├─ storeLesson()/updateLesson()/destroyLesson()
+│   │   ├─ Model: App\Models\Lesson  DB: lessons
+│   │   ├─ Service: App\Support\SecureVideoUpload  (local video file storage)
+│   │   └─ File: storage/app/*  (uploaded video files)
+│   └─ {View} resources/views/admin/courses/{show,edit}.blade.php
+│             resources/views/admin/modules/edit.blade.php
+│             resources/views/admin/lessons/edit.blade.php
+│
+├─ Controller: App\Http\Controllers\Admin\CourseController  (show only)
+│   └─ Model: App\Models\Course  DB: courses
+│
+├─ Model: App\Models\Course   DB: courses
+├─ Model: App\Models\Module   DB: modules
+├─ Model: App\Models\Lesson   DB: lessons
+└─ Policy: App\Policies\{CoursePolicy, ModulePolicy, LessonPolicy}
+```
+
+---
+
+### 18.11 Admin: Services CRUD
+
+```
+Admin Services (Service Catalog Management)
+├─ [Route]  (resource /admin/services, auth + verified + admin)  routes/web.php
+│   GET/POST/PUT/DELETE → names: admin.services.{index,create,store,show,edit,update,destroy}
+│
+├─ Controller: App\Http\Controllers\Admin\ServiceController
+│   ├─ index()   → {View} resources/views/admin/services/index.blade.php
+│   │   └─ Model: App\Models\Service  DB: services
+│   ├─ create()/store()    → {View} create.blade.php  → ServiceManagementService::create()
+│   ├─ show()              → {View} show.blade.php
+│   ├─ edit()/update()     → {View} edit.blade.php + _form.blade.php  → ServiceManagementService::update()
+│   └─ destroy()           → Model: App\Models\Service  DB: services
+│
+├─ Service: App\Services\Service\ServiceManagementService
+├─ Model: App\Models\Service  DB: services
+├─ Request: App\Http\Requests\Service\{StoreServiceRequest, UpdateServiceRequest}
+└─ {View} resources/views/admin/services/{index,create,show,edit,_form}.blade.php
+```
+
+---
+
+### 18.12 Admin: Subscriptions Report
+
+```
+Admin Subscriptions & Analytics (/admin/subscriptions)
+├─ [Route]  GET /admin/subscriptions  (name: admin.subscriptions.index)  routes/web.php
+│           (auth + verified + admin middleware)
+│
+├─ Controller: App\Http\Controllers\Admin\SubscriptionController
+│   └─ index()  → aggregated payment stats + paginated list
+│       ├─ Model: App\Models\Payment     DB: payments  (with user, service)
+│       ├─ Model: App\Models\User        DB: users
+│       ├─ Model: App\Models\Service     DB: services
+│       └─ {View} resources/views/admin/subscriptions/index.blade.php
+│
+└─ DB: payments, users, services
+```
+
+---
+
+### 18.13 Customer: Profile Management
+
+```
+Profile (/profile)
+├─ [Route]  GET    /profile              (name: profile.edit)   routes/web.php
+│           PATCH  /profile              (name: profile.update)
+│           DELETE /profile              (name: profile.destroy)
+│           (auth middleware)
+│
+├─ Controller: App\Http\Controllers\ProfileController
+│   ├─ edit()   → {View} resources/views/profile/edit.blade.php
+│   │             resources/views/profile/partials/*.blade.php
+│   │   └─ Model: App\Models\User  DB: users
+│   ├─ update() → User::fill/save  DB: users
+│   │   └─ Request: App\Http\Requests\ProfileUpdateRequest
+│   └─ destroy()→ logout + User::delete  DB: users
+│
+└─ Model: App\Models\User  DB: users
+```
+---
+
+### 18.14 Public: Contact Enquiry
+
+```
+Contact (/contact)
+├─ [Route]  GET  /contact      (name: contact)        routes/web.php
+│           POST /contact      (name: contact.submit)
+│
+├─ Controller: App\Http\Controllers\ContactController
+│   ├─ show()   → {View} resources/views/contact.blade.php
+│   └─ store()  → validate → TelegramService::sendMessage() (ops channel)
+│       └─ Service: App\Services\Telegram\TelegramService
+│
+└─ {View} resources/views/contact.blade.php
+```
+
+---
+
+### 18.15 Public / Guest: Authentication
+
+```
+Auth: Register / Login / Password Reset / Email Verify / Logout
+├─ [Route]  all in routes/auth.php  (guest / auth middleware groups)
+│   register, login, forgot-password, reset-password,
+│   verify-email, password.confirm, password.update, logout
+│
+├─ Controller: App\Http\Controllers\Auth\*
+│   ├─ RegisteredUserController     → Model: App\Models\User  DB: users
+│   ├─ AuthenticatedSessionController → login/logout (session)
+│   ├─ PasswordResetLinkController / NewPasswordController  → password reset
+│   ├─ VerifyEmailController / EmailVerification*  → email verification
+│   └─ ConfirmablePasswordController / PasswordController   → confirm password / update
+│
+├─ Model: App\Models\User  DB: users
+│         (personal_access_tokens via Sanctum for API)
+└─ {View} resources/views/auth/{login,register,forgot-password,reset-password,verify-email,confirm-password}.blade.php
+```
+
+---
+
+### 18.16 Admin Dashboard
+
+```
+Admin Dashboard (/admin/dashboard)
+├─ [Route]  GET /admin/dashboard  (name: dashboard)  routes/web.php
+│           (auth + verified + admin middleware)
+│
+├─ Controller: App\Http\Controllers\AdminController
+│   └─ index()  → aggregates stats
+│       ├─ Model: App\Models\Service      DB: services
+│       ├─ Model: App\Models\Lesson       DB: lessons
+│       ├─ Model: App\Models\Payment      DB: payments  (pending count)
+│       ├─ Model: App\Models\Course       DB: courses
+│       └─ Model: App\Models\AgentStatus  DB: agent_statuses  (online count)
+│
+└─ {View} resources/views/dashboard.blade.php
+```
+
+---
+
+### 18.17 Console (Scheduler): Check Offline Agents
+
+```
+Scheduled Command: agents:check-offline (every 5 minutes)
+├─ [Route]  routes/console.php  → Schedule::command('agents:check-offline')->everyFiveMinutes()
+│
+├─ Command: App\Console\Commands\CheckOfflineAgents
+│   ├─ Model: App\Models\Agent        DB: agents
+│   ├─ Model: App\Models\AgentStatus  DB: agent_statuses
+│   └─ Service: App\Services\Telegram\TelegramService  (offline alert)
+│
+└─ DB: agents, agent_statuses
+```
+
+---
+
+### 18.18 Admin: Edit Service Python Script (Dedicated Page)
+
+```
+Edit Service Python Script (/admin/services/{service}/script/edit)
+├─ [Route]  GET  /admin/services/{service}/script/edit   (name: admin.services.script.edit)  routes/web.php
+│           PUT  /admin/services/{service}/script        (name: admin.services.script.update)
+│           (auth + verified + admin middleware)
+│
+├─ Controller: App\Http\Controllers\Admin\ServiceScriptController
+│   ├─ edit()   → {View} resources/views/admin/services/script_edit.blade.php
+│   │   ├─ Model: App\Models\Service  DB: services  (reads script_path)
+│   │   └─ Service: Service::getScriptContent()  → reads file from storage/app/service_scripts/{id}/script.py
+│   │         (falls back to script_code DB column if no file path)
+│   └─ update() → ServiceScriptService::store()  → writes script file
+│       ├─ Request: App\Http\Requests\Service\EditServiceScriptRequest
+│       │   (validates .py file upload OR raw script_content text)
+│       ├─ Service: App\Services\Service\ServiceScriptService
+│       │   Stores privately in storage/app/service_scripts/{service_id}/script.py
+│       │   (local disk — NOT publicly accessible via URL)
+│       └─ Model: App\Models\Service  → updates script_path column  DB: services
+│
+├─ File:  storage/app/service_scripts/{service_id}/script.py  (secure, private storage)
+├─ Model: App\Models\Service  DB: services  (script_path column)
+└─ {View}   resources/views/admin/services/script_edit.blade.php
+            (linked from show.blade.php via "Edit Script" button)
+            resources/views/layouts/admin.blade.php
+```
+
+---
+
+### 18.19 Quick Reference: Model → Database Table
+
+| Model | Database Table | Purpose |
+|-------|---------------|---------|
+| `App\Models\User` | `users` | Customers & admins |
+| `App\Models\Service` | `services` | Marketplace services (10 automated agents) — `script_path` tracks the private script file |
+| `App\Models\Course` | `courses` | Academy courses |
+| `App\Models\Module` | `modules` | Course modules |
+| `App\Models\Lesson` | `lessons` | Course lessons (+ video) |
+| `App\Models\Payment` | `payments` | Manual payment receipts, pending→approved→rejected, licence keys |
+| `App\Models\Entitlement` | `entitlements` | Academy access grants (course/module/lesson) |
+| `App\Models\Purchase` | `purchases` | Purchase records |
+| `App\Models\Agent` | `agents` | Registered remote agents (fleet) |
+| `App\Models\AgentCommand` | `agent_commands` | Queued admin commands |
+| `App\Models\AgentCommandResult` | `agent_command_results` | Command execution results |
+| `App\Models\AgentHeartbeat` | `agent_heartbeats` | Agent heartbeats |
+| `App\Models\AgentStatus` | `agent_statuses` | Agent online/offline status |
+| `App\Models\ActionLog` | `action_logs` | Admin audit log (approve/reject) |
+
+**Other DB tables:** `personal_access_tokens` (Sanctum API tokens), `cache`, `jobs` (Laravel defaults).
+
+
+
+
+

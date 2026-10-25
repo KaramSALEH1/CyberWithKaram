@@ -40,8 +40,10 @@
         </div>
 
         <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-            <h2 class="text-lg font-bold text-karam-green mb-3">Agent Payload Script</h2>
-            <pre class="bg-gray-950 border border-gray-700 rounded-lg p-4 text-xs overflow-x-auto text-green-300">{{ $service->script_code ?: '# No payload set yet' }}</pre>
+            <h2 class="text-lg font-bold text-karam-green mb-3 flex items-center gap-2">Agent Payload Script
+                <a href="{{ route('admin.services.script.edit', $service) }}" class="text-xs bg-blue-700 text-white px-2 py-1 rounded">Edit Script</a>
+            </h2>
+            <pre class="bg-gray-950 border border-gray-700 rounded-lg p-4 text-xs overflow-x-auto text-green-300 max-h-64 overflow-y-auto">{{ $service->getScriptContent() ?: '# No payload set yet' }}</pre>
         </div>
     </div>
 </div>

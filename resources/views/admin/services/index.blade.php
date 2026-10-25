@@ -19,7 +19,7 @@
 
         <div class="space-y-3">
             @forelse($services as $service)
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 hover:border-cyan-500/30 transition-all duration-300">
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4 sm:p-5 hover:border-karam-green/30 transition-all duration-300">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div class="text-2xl">{{ $service->icon ?: '🛡️' }}</div>
@@ -31,7 +31,7 @@
                         <div class="flex items-center gap-2 flex-shrink-0">
                             <span class="text-xs px-2 py-1 rounded {{ $service->is_visible ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300' }}">{{ $service->is_visible ? 'Visible' : 'Hidden' }}</span>
                             <a href="{{ route('admin.services.show', $service) }}" class="px-3 py-2 rounded bg-gray-700 text-xs font-bold">Control</a>
-                            <a href="{{ route('admin.services.edit', $service) }}" class="px-3 py-2 rounded bg-blue-900 text-blue-300 text-xs font-bold">Edit</a>
+                            <a href="{{ route('admin.services.edit', $service) }}" class="px-3 py-2 rounded bg-karam-green-900 text-karam-green-300 text-xs font-bold">Edit</a>
                             <form method="POST" action="{{ route('admin.services.destroy', $service) }}" onsubmit="return confirm('Delete this service?')">
                                 @csrf
                                 @method('DELETE')

@@ -3,10 +3,10 @@
 @section('title', $lesson->title)
 
 @section('content')
-<div class="flex flex-col lg:flex-row min-h-screen bg-[#0a0a0a]">
+<div class="flex flex-col lg:flex-row min-h-screen bg-gray-900">
     <!-- Sleek Tree-View Sidebar -->
-    <aside class="w-full lg:w-80 bg-[#111] border-r border-white/5 flex-shrink-0 flex flex-col">
-        <div class="p-8 border-b border-white/5 bg-[#0a0a0a]/50">
+    <aside class="w-full lg:w-80 bg-gray-900 border-r border-gray-800 flex-shrink-0 flex flex-col">
+        <div class="p-8 border-b border-gray-800 bg-gray-900/50">
             <a href="{{ route('courses.show', $course->slug) }}" class="inline-flex items-center gap-2 text-[10px] font-black text-karam-green hover:text-white transition-colors uppercase tracking-[0.2em] italic mb-6">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -29,7 +29,7 @@
 
                             @if($isAccessible)
                                 <a href="{{ route('lessons.show', [$course->slug, $m_lesson->slug]) }}" 
-                                   class="group flex items-center gap-4 p-3 rounded-xl transition-all duration-300 {{ $isActive ? 'bg-karam-green/10 border border-karam-green/20' : 'hover:bg-white/5 border border-transparent' }}">
+                                   class="group flex items-center gap-4 p-3 rounded-xl transition-all duration-300 {{ $isActive ? 'bg-karam-green/10 border border-karam-green/20' : 'hover:bg-gray-800 border border-transparent' }}">
                                     <span class="font-mono text-[10px] {{ $isActive ? 'text-karam-green' : 'text-gray-600' }}">{{ str_pad($m_lesson->order_no, 2, '0', STR_PAD_LEFT) }}</span>
                                     <span class="text-sm font-bold truncate {{ $isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200' }} italic">{{ $m_lesson->title }}</span>
                                     @if($isActive)
@@ -53,7 +53,7 @@
     </aside>
 
     <!-- Content Area -->
-    <main class="flex-1 overflow-y-auto bg-[#0a0a0a]">
+    <main class="flex-1 overflow-y-auto bg-gray-900">
         <div class="max-w-5xl mx-auto px-6 py-12 lg:px-16">
             <!-- Dual Video Player -->
             <div class="relative mb-12 group">
@@ -74,7 +74,7 @@
                             Your browser does not support the video tag.
                         </video>
                     @else
-                        <div class="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-[#111]">
+                        <div class="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-gray-900">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
@@ -104,11 +104,11 @@
             </div>
 
             <!-- Premium Navigation -->
-            <div class="mt-20 pt-10 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-8">
+            <div class="mt-20 pt-10 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-8">
                 @if($prevLesson)
                     <a href="{{ route('lessons.show', [$course->slug, $prevLesson->slug]) }}" class="w-full sm:w-auto flex flex-col items-start group">
                         <span class="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-3 italic">Previous Lesson</span>
-                        <div class="flex items-center gap-4 bg-[#111] border border-white/5 px-6 py-4 rounded-2xl group-hover:border-karam-green/30 transition-all duration-300">
+                        <div class="flex items-center gap-4 bg-gray-900 border border-gray-800 px-6 py-4 rounded-2xl group-hover:border-karam-green/30 transition-all duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-karam-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
@@ -122,7 +122,7 @@
                 @if($nextLesson)
                     <a href="{{ route('lessons.show', [$course->slug, $nextLesson->slug]) }}" class="w-full sm:w-auto flex flex-col items-end group">
                         <span class="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-3 italic">Next Lesson</span>
-                        <div class="flex items-center gap-4 bg-[#111] border border-white/5 px-6 py-4 rounded-2xl group-hover:border-karam-green/30 transition-all duration-300">
+                        <div class="flex items-center gap-4 bg-gray-900 border border-gray-800 px-6 py-4 rounded-2xl group-hover:border-karam-green/30 transition-all duration-300">
                             <span class="text-gray-300 group-hover:text-white transition-colors font-black italic">{{ $nextLesson->title }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-karam-green transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

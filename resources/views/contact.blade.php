@@ -35,7 +35,7 @@
         ];
     @endphp
 
-    <div class="min-h-screen bg-[#050505] text-gray-100">
+    <div class="min-h-screen bg-gray-900 text-white">
         <section class="relative py-24 px-6 lg:px-8 overflow-hidden">
             <div class="absolute -top-32 -left-32 w-[30rem] h-[30rem] rounded-full bg-karam-green/5 blur-3xl"></div>
 
@@ -65,7 +65,7 @@
                     <div class="lg:col-span-2 space-y-4">
                         @foreach ($channels as [$icon, $label, $href, $value, $hint])
                             <div
-                                class="group bg-[#0a0a0a] border border-white/5 hover:border-karam-green/40 rounded-2xl p-5 flex items-start gap-4 transition-all duration-300">
+                                class="group bg-gray-900 border border-white/5 hover:border-karam-green/40 rounded-2xl p-5 flex items-start gap-4 transition-all duration-300">
                                 <span
                                     class="flex-shrink-0 w-11 h-11 rounded-xl bg-karam-green/10 border border-karam-green/20 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                                     {{ $icon }}
@@ -86,7 +86,7 @@
                     </div>
                     <!-- Contact form -->
                     <div class="lg:col-span-3">
-                        <div class="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8">
+                        <div class="bg-gray-900 border border-white/5 rounded-2xl p-8">
                             <h2 class="text-xl font-bold mb-1">Send an enquiry</h2>
                             <p class="text-gray-500 text-sm mb-6">
                                 Fields marked <span class="text-red-400">*</span> are required.
@@ -150,7 +150,7 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full bg-karam-green text-black font-bold py-4 rounded-lg hover:opacity-90 transition shadow-[0_0_30px_rgba(0,242,96,0.2)]">
+                                    class="w-full bg-karam-green text-black font-bold py-4 rounded-lg hover:opacity-90 transition shadow-[0_0_30px_rgba(0,135,81,0.2)]">
                                     Send enquiry
                                 </button>
                             </form>

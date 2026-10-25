@@ -21,6 +21,7 @@ class Service extends Model
         'is_available',
         'payment_instructions',
         'script_code',
+        'script_path',
     ];
 
     protected function casts(): array
@@ -96,6 +97,25 @@ class Service extends Model
     /**
      * "80,000 SYP · $8" style price label for the storefront.
      */
+    /**
+     * Return the agent script content.
+     *
+     * Prefers the script file stored in storage/app/service_scripts/{id}/script.py
+     * (tracked by the script_path column). Falls back to the legacy script_code
+     * database column when no file path is set.
+     */
+    public function getScriptContent(): ?string
+    {
+        if ($this->script_path) {
+            $fullPath = storage_path('app/' . $this->script_path);
+            if (file_exists($fullPath)) {
+                return file_get_contents($fullPath);
+            }
+        }
+
+        return $this->script_code;
+    }
+
     public function priceLabel(): string
     {
         if (! $this->requiresPayment()) {

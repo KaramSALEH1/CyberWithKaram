@@ -11,6 +11,7 @@ use App\Http\Controllers\{
     Admin\CourseController as AdminCourseController,
     Admin\PaymentController as AdminPaymentController,
     Admin\ServiceController,
+    Admin\ServiceScriptController,
     Admin\SubscriptionController,
     PaymentController,
     ProfileController,
@@ -148,6 +149,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->group(functio
         'update' => 'admin.services.update',
         'destroy' => 'admin.services.destroy',
     ]);
+
+    // Dedicated Python script editor (separate from the service details form).
+    Route::get('/services/{service}/script/edit', [ServiceScriptController::class, 'edit'])
+        ->name('admin.services.script.edit');
+    Route::put('/services/{service}/script', [ServiceScriptController::class, 'update'])
+        ->name('admin.services.script.update');
 });
 
 Route::middleware(['auth'])->group(function () {

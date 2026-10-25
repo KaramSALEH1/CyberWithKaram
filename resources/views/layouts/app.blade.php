@@ -30,22 +30,22 @@
                 <span class="text-2xl font-bold tracking-tighter text-karam-green">CyberLogia</span>
             </a>
             <div class="hidden md:flex space-x-8 items-center text-sm font-medium">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Home</a>
-                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">About</a>
-                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Services</a>
-                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">Courses</a>
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-karam-green' : 'hover:text-karam-green/90' }} transition">Home</a>
+                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-karam-green' : 'hover:text-karam-green/90' }} transition">About</a>
+                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-karam-green' : 'hover:text-karam-green/90' }} transition">Services</a>
+                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-karam-green' : 'hover:text-karam-green/90' }} transition">Courses</a>
                 @auth
-                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition">My Tools</a>
+                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-karam-green' : 'hover:text-karam-green/90' }} transition">My Tools</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="hover:text-red-400 transition">Logout</button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="hover:text-cyan-400 transition">Login</a>
+                    <a href="{{ route('login') }}" class="hover:text-karam-green transition">Login</a>
                 @endauth
 
                 <a href="{{ route('contact') }}"
-                    class="bg-cyan-500 text-black px-4 sm:px-5 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
+                    class="bg-karam-green text-black px-4 sm:px-5 py-2 rounded-md font-bold hover:bg-karam-green/90 transition shadow-lg shadow-karam-green/20">Contact
                     Us</a>
             </div>
 
@@ -65,21 +65,21 @@
         <!-- Responsive Navigation Menu (mobile only) -->
         <div :class="{ 'block': open, 'hidden': ! open }" class="hidden md:hidden max-w-7xl mx-auto pt-4">
             <div class="flex flex-col gap-1 text-sm font-medium">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Home</a>
-                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">About</a>
-                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Services</a>
-                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">Courses</a>
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'text-karam-green' : 'hover:text-karam-green' }} transition py-2">Home</a>
+                <a href="{{ route('about') }}" class="{{ request()->routeIs('about') ? 'text-karam-green' : 'hover:text-karam-green' }} transition py-2">About</a>
+                <a href="{{ route('services') }}" class="{{ request()->routeIs('services') ? 'text-karam-green' : 'hover:text-karam-green' }} transition py-2">Services</a>
+                <a href="{{ route('courses') }}" class="{{ request()->routeIs('courses') ? 'text-karam-green' : 'hover:text-karam-green' }} transition py-2">Courses</a>
                 @auth
-                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-cyan-400' : 'hover:text-cyan-400' }} transition py-2">My Tools</a>
+                    <a href="{{ route('my-tools.index') }}" class="{{ request()->routeIs('my-tools.*') ? 'text-karam-green' : 'hover:text-karam-green' }} transition py-2">My Tools</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-left hover:text-red-400 transition py-2">Logout</button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="hover:text-cyan-400 transition py-2">Login</a>
+                    <a href="{{ route('login') }}" class="hover:text-karam-green transition py-2">Login</a>
                 @endauth
                 <a href="{{ route('contact') }}"
-                    class="mt-2 w-full text-center bg-cyan-500 text-black px-4 py-2 rounded-md font-bold hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">Contact
+                    class="mt-2 w-full text-center bg-karam-green text-black px-4 py-2 rounded-md font-bold hover:bg-karam-green/90 transition shadow-lg shadow-karam-green/20">Contact
                     Us</a>
             </div>
         </div>

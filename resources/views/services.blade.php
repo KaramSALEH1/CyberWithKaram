@@ -12,31 +12,29 @@
         $totalCount = $services->count();
     @endphp
 
-    <div class="min-h-screen bg-[#050505] text-gray-100 font-sans selection:bg-cyan-500/30"
-        x-data="{
-            activeCategory: @js($categories->contains(request('category')) ? request('category') : 'all'),
-            matches(category) {
-                return this.activeCategory === 'all' || this.activeCategory === category;
-            },
-            countFor(category) {
-                return category === 'all'
-                    ? {{ $totalCount }}
-                    : {{ $totalCount }};
-            }
-        }">
+    <div class="min-h-screen bg-gray-900 text-white font-sans selection:bg-karam-green" x-data="{
+        activeCategory: @js($categories->contains(request('category')) ? request('category') : 'all'),
+        matches(category) {
+            return this.activeCategory === 'all' || this.activeCategory === category;
+        },
+        countFor(category) {
+            return category === 'all' ?
+                {{ $totalCount }} :
+                {{ $totalCount }};
+        }
+    }">
         <section class="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
             <div class="text-center mb-12">
                 <span class="inline-block font-mono text-[11px] uppercase tracking-[0.35em] text-karam-green mb-5">
                     CyberLogia
                 </span>
 
-                <h1 dir="rtl" lang="ar"
-                    class="text-4xl md:text-6xl font-black tracking-tight mb-3 text-white">
-                    مصفوفة الخدمات السيبرانية
+                <h1 dir="rtl" lang="ar" class="text-4xl md:text-6xl font-black tracking-tight mb-3 text-white">
+                    الخدمات السيبرانية
                 </h1>
 
                 <h2 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-6 text-karam-green">
-                    Cybersecurity Services Matrix
+                    Cybersecurity Services
                 </h2>
 
                 <p class="text-gray-500 text-lg max-w-2xl mx-auto font-medium">
@@ -47,12 +45,13 @@
 
             <!-- Category filters -->
             @if ($categories->isNotEmpty())
-                <div class="flex flex-wrap items-center justify-center gap-3 mb-6"
-                    role="tablist" aria-label="Filter services by category">
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-6" role="tablist"
+                    aria-label="Filter services by category">
                     <button type="button" @click="activeCategory = 'all'"
                         :class="activeCategory === 'all'
-                            ? 'bg-karam-green text-black border-karam-green'
-                            : 'bg-white/[0.03] text-gray-300 border-white/10 hover:border-karam-green hover:text-karam-green'"
+                            ?
+                            'bg-karam-green text-black border-karam-green' :
+                            'bg-gray-800 text-gray-300 border-gray-700 hover:border-karam-green hover:text-karam-green'"
                         class="inline-flex items-center gap-2 border px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all"
                         :aria-selected="activeCategory === 'all'">
                         All
@@ -61,9 +60,9 @@
 
                     @foreach ($categories as $category)
                         <button type="button" @click="activeCategory = @js($category)"
-                            :class="activeCategory === @js($category)
-                                ? 'bg-karam-green text-black border-karam-green'
-                                : '{{ $categoryStyles[$category] ?? 'border-cyan-400/30 text-cyan-300' }} bg-white/[0.03] hover:brightness-125'"
+                            :class="activeCategory === @js($category) ?
+                                'bg-karam-green text-black border-karam-green' :
+                                'bg-gray-800 text-gray-300 border-gray-700 hover:brightness-125'"
                             class="inline-flex items-center gap-2 border px-5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all"
                             :aria-selected="activeCategory === @js($category)">
                             <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
@@ -90,14 +89,8 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @forelse ($services as $service)
-                    <div x-show="matches(@js($service->category))"
-                        x-transition.opacity.duration.300ms
-                        class="bento-card group relative bg-[#0a0a0a] border border-[#00f2ff33] rounded-2xl p-8 flex flex-col transition-all duration-500 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(0,242,255,0.15)] overflow-hidden">
-                        <!-- Background Glow -->
-                        <div
-                            class="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-all duration-500">
-                        </div>
-
+                    <div x-show="matches(@js($service->category))" x-transition.opacity.duration.300ms
+                        class="bg-gray-900 border border-gray-800 rounded-xl p-8 flex flex-col transition-all duration-300 hover:border-karam-green group">
                         <div class="relative z-10">
                             <div class="flex justify-between items-start mb-6">
                                 <div class="p-3 bg-gray-900/50 rounded-xl border border-white/5">
@@ -132,39 +125,41 @@
                             </div>
 
                             <div class="flex flex-wrap gap-2 mb-4">
-                                    @php
-                                        $badgeStyles = [
-                                            'Blue Team' => 'bg-blue-500/10 border-blue-400/30 text-blue-300',
-                                            'Red Team' => 'bg-red-500/10 border-red-400/30 text-red-300',
-                                            'Cloud Security' => 'bg-sky-500/10 border-sky-400/30 text-sky-300',
-                                        ];
-                                        $badgeStyle = $badgeStyles[$service->category] ?? 'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
-                                    @endphp
+                                @php
+                                    $badgeStyles = [
+                                        'Blue Team' => 'bg-blue-500/10 border-blue-400/30 text-blue-300',
+                                        'Red Team' => 'bg-red-500/10 border-red-400/30 text-red-300',
+                                        'Cloud Security' => 'bg-sky-500/10 border-sky-400/30 text-sky-300',
+                                    ];
+                                    $badgeStyle =
+                                        $badgeStyles[$service->category] ??
+                                        'bg-cyan-500/10 border-cyan-400/30 text-cyan-300';
+                                @endphp
+                                <span
+                                    class="inline-flex items-center gap-1.5 border bg-gray-800/50 border-gray-700 text-gray-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                    {{ $service->category }}
+                                </span>
+
+                                @if ($service->is_automated)
                                     <span
-                                        class="inline-flex items-center gap-1.5 border {{ $badgeStyle }} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                                        {{ $service->category }}
-                                    </span>
-
-                                    @if ($service->is_automated)
-                                        <span
-                                            class="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                            <span class="relative flex h-1.5 w-1.5">
-                                                <span
-                                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                <span
-                                                    class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-                                            </span>
-                                            Automated Agent Service
+                                        class="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                        <span class="relative flex h-1.5 w-1.5">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span
+                                                class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
                                         </span>
-                                    @endif
-                                </div>
+                                        Automated Agent Service
+                                    </span>
+                                @endif
+                            </div>
 
-                                <h2
-                                    class="text-2xl font-mono font-bold text-white mb-4 tracking-tight group-hover:text-cyan-400 transition-colors">
-                                    {{ $service->title }}</h2>
-                                <p class="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-3">{{ $service->description }}
-                                </p>
+                            <h2
+                                class="text-2xl font-mono font-bold text-white mb-4 tracking-tight group-hover:text-karam-green transition-colors">
+                                {{ $service->title }}</h2>
+                            <p class="text-gray-400 text-sm leading-relaxed mb-8 line-clamp-3">{{ $service->description }}
+                            </p>
                         </div>
 
                         <div class="mt-auto relative z-10">
@@ -175,7 +170,7 @@
                                     <span class="text-xs font-medium text-gray-500 uppercase">SYP</span>
                                     <span class="text-[10px] font-mono text-gray-600">|</span>
                                     <span
-                                        class="text-sm font-mono font-semibold text-cyan-400">${{ number_format($service->usdPrice(), 0) }}</span>
+                                        class="text-sm font-mono font-semibold text-gray-300">${{ number_format($service->usdPrice(), 0) }}</span>
                                     <span class="text-[10px] font-medium text-gray-500 uppercase">USD / mo</span>
                                 @else
                                     <span class="text-lg font-mono font-bold text-gray-400 italic">Custom Quote</span>
@@ -183,7 +178,7 @@
                             </div>
 
                             <div class="flex flex-col gap-3">
-                                <a href="{{ route('service.show', $service->slug) }}" class="btn-primary-cyan-v2">
+                                <a href="{{ route('service.show', $service->slug) }}" class="bg-karam-green hover:opacity-90 px-6 py-3 rounded-lg font-bold text-white transition shadow-lg shadow-karam-green/20">
                                     <span>Explore</span>
                                     <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +188,7 @@
                                 </a>
 
                                 @if ($service->is_available)
-                                    <a href="{{ route('services.pay', $service->slug) }}" class="btn-buy-now-cyan">
+                                    <a href="{{ route('services.pay', $service->slug) }}" class="border border-gray-700 hover:border-karam-green px-6 py-3 rounded-lg font-bold text-gray-300 transition">
                                         Buy Now
                                     </a>
                                 @endif
@@ -223,7 +218,7 @@
     <script>
         // Hide the whole grid when the active filter matches nothing, and show
         // the "no match" hint instead.
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const root = document.querySelector('[x-data]');
             if (!root) return;
             const grid = root.querySelector('.grid');
@@ -243,48 +238,7 @@
 @endpush
 
 <style>
-    @keyframes pulse-green {
-        0% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-        }
-
-        70% {
-            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
-        }
-
-        100% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-        }
-    }
-
     .pulse-green {
         animation: pulse-green 2s infinite;
-    }
-
-    .btn-primary-cyan-v2 {
-        @apply relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300;
-        background: linear-gradient(90deg, #00f2ff, #0087ff);
-        color: #000;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-    }
-
-    .btn-primary-cyan-v2:hover {
-        box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
-        transform: translateY(-1px);
-    }
-
-    .btn-buy-now-cyan {
-        @apply flex items-center justify-center px-6 py-3 rounded-xl font-bold text-sm border border-cyan-500/30 text-cyan-400 transition-all duration-300;
-        background: rgba(0, 242, 255, 0.05);
-    }
-
-    .btn-buy-now-cyan:hover {
-        background: rgba(0, 242, 255, 0.1);
-        border-color: #00f2ff;
-        color: #fff;
-    }
-
-    .bento-card {
-        background: #0a0a0a;
     }
 </style>

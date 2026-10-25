@@ -3,7 +3,7 @@
 @section('title', 'Cybersecurity Academy Tracks')
 
 @section('content')
-    <section class="py-20 bg-[#0a0a0a] min-h-screen">
+    <section class="py-20 bg-gray-900 min-h-screen">
         <div class="max-w-7xl mx-auto px-6">
             <div class="mb-16 text-center">
                 <h1 class="text-6xl font-black mb-4 tracking-tighter italic">
@@ -17,10 +17,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 @forelse($courses as $course)
                     <div
-                        class="group relative bg-[#111] border border-white/5 rounded-3xl p-8 hover:border-karam-green/50 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+                        class="group relative bg-gray-900 border border-gray-800 rounded-3xl p-8 hover:border-karam-green transition-all duration-500 overflow-hidden">
                         <!-- Glow Effect -->
                         <div
-                            class="absolute -inset-1 bg-karam-green/20 rounded-3xl blur opacity-0 group-hover:opacity-100 transition duration-500">
+                            class="absolute -inset-1 bg-karam-green/10 rounded-3xl blur opacity-0 group-hover:opacity-100 transition duration-500">
                         </div>
 
                         <div class="relative flex flex-col h-full">
@@ -51,8 +51,8 @@
 
                             <div class="flex items-center justify-between mt-auto">
                                 <div class="flex -space-x-2">
-                                    <div
-                                        class="h-8 w-8 rounded-full border-2 border-[#111] bg-gray-800 flex items-center justify-center">
+                                <div
+                                        class="h-8 w-8 rounded-full border-2 border-gray-800 bg-gray-800 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-karam-green"
                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -60,15 +60,15 @@
                                         </svg>
                                     </div>
                                     <div
-                                        class="h-8 w-8 rounded-full border-2 border-[#111] bg-gray-800 flex items-center justify-center text-[10px] font-bold text-white">
+                                        class="h-8 w-8 rounded-full border-2 border-gray-800 bg-gray-800 flex items-center justify-center text-[10px] font-bold text-white">
                                         {{ $course->modules->count() }}
                                     </div>
                                 </div>
 
                                 <a href="{{ route('courses.show', $course->slug) }}"
-                                    class="inline-flex items-center gap-2 bg-karam-green text-black font-black px-6 py-3 rounded-xl hover:scale-105 transition shadow-[0_0_20px_rgba(0,255,0,0.2)]">
+                                    class="inline-flex items-center gap-2 bg-karam-green text-black font-black px-6 py-3 rounded-xl hover:scale-105 transition shadow-[0_0_20px_rgba(0,135,81,0.2)]">
                                     EXPLORE
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill=""
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M14 5l7 7m0 0l-7 7m7-7H3" />

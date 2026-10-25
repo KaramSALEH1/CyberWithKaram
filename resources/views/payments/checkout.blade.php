@@ -17,10 +17,10 @@
             window.location.href = '{{ route('payment.mock-global-success', ['type' => $product_type, 'slug' => $mockSlug]) }}';
         }
     }">
-        <div class="bg-[#0a0a0a] border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] rounded-2xl p-4 sm:p-6 md:p-8">
+        <div class="bg-gray-900 border border-gray-800 shadow-lg rounded-2xl p-4 sm:p-6 md:p-8">
             <h1 class="text-2xl sm:text-3xl font-black mb-2 text-white">{{ $product->title }}</h1>
             <div class="flex flex-wrap items-baseline gap-3 mb-4 sm:mb-6">
-                <span class="text-cyan-400 text-xl sm:text-2xl font-bold">{{ number_format((float) $product->price, 0) }} SYP</span>
+                <span class="text-karam-green text-xl sm:text-2xl font-bold">{{ number_format((float) $product->price, 0) }} SYP</span>
                 @if ((float) $product->price > 0)
                     <span class="text-[10px] font-mono text-gray-600">|</span>
                     <span class="text-sm font-mono font-semibold text-gray-300">
@@ -35,8 +35,8 @@
             @endif
 
             @if ($approvedPayment)
-                <div class="mb-4 sm:mb-6 rounded-lg border border-cyan-500/40 bg-cyan-500/10 p-3 sm:p-4">
-                    <p class="font-bold text-cyan-400">
+                <div class="mb-4 sm:mb-6 rounded-lg border border-gray-800 bg-gray-900/50 p-3 sm:p-4">
+                    <p class="font-bold text-karam-green">
                         @if($product_type == 'course')
                             Academy Access Granted
                         @elseif($product_type == 'module')
@@ -49,14 +49,14 @@
                     </p>
                     @if ($product_type == 'service')
                         <p class="text-sm text-gray-300 mt-1">Your license key:</p>
-                        <p class="font-mono text-base sm:text-lg mt-1 text-cyan-300">{{ $approvedPayment->license_key }}</p>
+                        <p class="font-mono text-base sm:text-lg mt-1 text-karam-green">{{ $approvedPayment->license_key }}</p>
                         <p class="text-xs text-gray-400 mt-2">Deploy your agent instantly:</p>
-                        <code class="mt-2 block bg-black/80 border border-cyan-500/20 p-2.5 sm:p-3 rounded-lg text-[10px] sm:text-xs text-green-400 font-mono break-all overflow-x-auto whitespace-pre-wrap">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent_bootstrapper.py &amp;&amp; python3 agent_bootstrapper.py</code>
+                        <code class="mt-2 block bg-black/80 border border-gray-700/20 p-2.5 sm:p-3 rounded-lg text-[10px] sm:text-xs text-karam-green font-mono break-all overflow-x-auto whitespace-pre-wrap">curl -fsSL "{{ url('/my-tools/download-agent/' . $product->id . '/' . $approvedPayment->license_key) }}" -o agent_bootstrapper.py &amp;&amp; python3 agent_bootstrapper.py</code>
                         <p class="text-xs text-gray-400 mt-2">
-                            Valid until <span class="font-mono text-cyan-300">{{ $approvedPayment->expires_at?->format('Y-m-d H:i') }} UTC</span>
+                            Valid until <span class="font-mono text-karam-green">{{ $approvedPayment->expires_at?->format('Y-m-d H:i') }} UTC</span>
                             ({{ $approvedPayment->expires_at?->diffForHumans() }} left).
                         </p>
-                        <a href="{{ route('my-tools.index') }}" class="inline-block mt-3 text-cyan-400 text-sm hover:underline">View full deployment commands →</a>
+                        <a href="{{ route('my-tools.index') }}" class="inline-block mt-3 text-gray-300 text-sm hover:underline">View full deployment commands →</a>
                     @else
                         <p class="text-sm text-gray-300 mt-1">
                             @if($product_type == 'course')
@@ -69,57 +69,57 @@
                         </p>
                         @if ($product_type === 'lesson')
                             <a href="{{ route('lessons.show', [$product->module->course->slug, $product->slug]) }}"
-                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-karam-green text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-karam-green/90 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Go to Lesson
                             </a>
                         @elseif ($product_type === 'course')
                             <a href="{{ route('courses.show', $product->slug) }}"
-                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-karam-green text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-karam-green/90 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Start Learning
                             </a>
                         @elseif ($product_type === 'module')
                             <a href="{{ route('courses.show', $product->course->slug) }}"
-                                class="inline-block mt-3 bg-cyan-500 text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                                class="inline-block mt-3 bg-karam-green text-black px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-karam-green/90 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.3)]">
                                 Start Learning
                             </a>
                         @endif
                     @endif
                 </div>
             @elseif($pendingPayment)
-                <div class="mb-6 rounded-lg border border-cyan-700 bg-cyan-900/20 p-4">
-                    <p class="font-bold text-cyan-300 mb-3">Payment Status Tracker</p>
+                <div class="mb-6 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+                    <p class="font-bold text-karam-green mb-3">Payment Status Tracker</p>
                     <div class="flex items-center justify-between text-sm">
                         <div
-                            class="text-center {{ $pendingPayment->status === 'pending' ? 'text-cyan-400 font-semibold' : 'text-gray-500' }}">
+                            class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500 font-semibold' : 'text-gray-500' }}">
                             Payment Submitted
                             @if ($pendingPayment->status === 'pending')
                                 <span class="block text-xs">(Awaiting)</span>
                             @endif
                         </div>
                         <div
-                            class="flex-1 border-t-2 {{ $pendingPayment->status === 'pending' ? 'border-gray-600' : 'border-cyan-400' }} mx-2">
+                            class="flex-1 border-t-2 {{ $pendingPayment->status === 'pending' ? 'border-gray-600' : 'border-gray-800' }} mx-2">
                         </div>
                         <div
-                            class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500' : 'text-cyan-400 font-semibold' }}">
+                            class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500' : 'text-gray-500 font-semibold' }}">
                             Verification in Progress
                             @if ($pendingPayment->status === 'pending')
                                 <span class="block text-xs">(Pending Admin Approval)</span>
                             @endif
                         </div>
                         <div
-                            class="flex-1 border-t-2 {{ $pendingPayment->status === 'pending' ? 'border-gray-600' : 'border-cyan-400' }} mx-2">
+                            class="flex-1 border-t-2 {{ $pendingPayment->status === 'pending' ? 'border-gray-600' : 'border-gray-800' }} mx-2">
                         </div>
-                        <div class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500' : 'text-cyan-400 font-semibold' }}">
+                        <div class="text-center {{ $pendingPayment->status === 'pending' ? 'text-gray-500' : 'text-gray-500 font-semibold' }}">
                             Status: <span class="font-semibold">Awaiting Approval</span>
                         </div>
                     </div>
                     <p class="text-xs text-gray-400 mt-3">Your payment reference: <span
-                            class="font-mono text-cyan-400">{{ $pendingPayment->transaction_id_reference }}</span></p>
+                            class="font-mono text-karam-green">{{ $pendingPayment->transaction_id_reference }}</span></p>
                 </div>
             @elseif($product->price > 0)
                 @guest
                     <p class="text-gray-400 mb-4">Please <a href="{{ route('login') }}"
-                            class="text-cyan-500 font-bold">login</a> to submit payment.</p>
+                            class="text-gray-300 font-bold">login</a> to submit payment.</p>
                 @else
                     @php
                         $isAvailable = ($product_type === 'service') ? $product->is_available : $product->is_active;
@@ -134,12 +134,12 @@
                         <div class="mb-6 border-b border-gray-700">
                             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                                 <button @click="paymentMethod = 'local'"
-                                    :class="{ 'border-cyan-500 text-cyan-500': paymentMethod === 'local', 'border-transparent text-gray-400 hover:text-gray-200': paymentMethod !== 'local' }"
+                                    :class="{ 'border-gray-800 text-gray-300': paymentMethod === 'local', 'border-transparent text-gray-400 hover:text-gray-200': paymentMethod !== 'local' }"
                                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
                                     Local Payments (Syria)
                                 </button>
                                 <button @click="paymentMethod = 'global'"
-                                    :class="{ 'border-cyan-500 text-cyan-500': paymentMethod === 'global', 'border-transparent text-gray-400 hover:text-gray-200': paymentMethod !== 'global' }"
+                                    :class="{ 'border-gray-800 text-gray-300': paymentMethod === 'global', 'border-transparent text-gray-400 hover:text-gray-200': paymentMethod !== 'global' }"
                                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors">
                                     Global Payments
                                 </button>
@@ -157,7 +157,7 @@
                                 <!-- Sham Cash -->
                                 <div class="payment-card group">
                                     <h4 class="font-semibold text-white mb-2">Sham Cash</h4>
-                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="sham-cash-acc" class="text-cyan-400">0987654321</span>
+                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="sham-cash-acc" class="text-karam-green">0987654321</span>
                                     </p>
                                     <button @click="copyToClipboard($event, 'sham-cash-acc')" class="copy-btn">Copy
                                         Account</button>
@@ -165,14 +165,14 @@
                                 <!-- Al-Haram -->
                                 <div class="payment-card group">
                                     <h4 class="font-semibold text-white mb-2">Al-Haram</h4>
-                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="al-haram-acc" class="text-cyan-400">1234567890</span></p>
+                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="al-haram-acc" class="text-karam-green">1234567890</span></p>
                                     <button @click="copyToClipboard($event, 'al-haram-acc')" class="copy-btn">Copy
                                         Account</button>
                                 </div>
                                 <!-- Syrian Bank -->
                                 <div class="payment-card group">
                                     <h4 class="font-semibold text-white mb-2">Syrian Bank</h4>
-                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="syrian-bank-acc" class="text-cyan-400">1122334455</span>
+                                    <p class="text-gray-300 text-sm mb-3">Account: <span id="syrian-bank-acc" class="text-karam-green">1122334455</span>
                                     </p>
                                     <button @click="copyToClipboard($event, 'syrian-bank-acc')" class="copy-btn">Copy
                                         Account</button>
@@ -182,7 +182,7 @@
                             <div class="mb-6">
                                 <h3 class="text-lg font-semibold text-white mb-3">Payment Instructions</h3>
                                 <div
-                                    class="bg-[#0f0f0f] border border-gray-700 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-line relative">
+                                    class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-line relative">
                                     @if($product_type == 'service')
                                         {!! nl2br(e($product->payment_instructions ?? 'Contact support for payment details.')) !!}
                                     @else
@@ -204,7 +204,7 @@
                                     <label for="account_name_number" class="block text-xs uppercase text-gray-400 mb-1">Your
                                         Account Name / Number</label>
                                     <input type="text" name="account_name_number" id="account_name_number"
-                                        class="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                                        class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-karam-green focus:outline-none transition-colors"
                                         value="{{ old('account_name_number') }}" required>
                                     @error('account_name_number')
                                         <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
@@ -214,7 +214,7 @@
                                     <label for="transaction_amount"
                                         class="block text-xs uppercase text-gray-400 mb-1">Transaction Amount (SYP)</label>
                                     <input type="number" name="transaction_amount" id="transaction_amount"
-                                        class="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                                        class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-karam-green focus:outline-none transition-colors"
                                         value="{{ old('transaction_amount', number_format((float) $product->price, 0, '.', '')) }}"
                                         required step="1">
                                     @error('transaction_amount')
@@ -225,7 +225,7 @@
                                     <label for="transaction_id_reference"
                                         class="block text-xs uppercase text-gray-400 mb-1">Transaction ID / Reference</label>
                                     <input type="text" name="transaction_id_reference" id="transaction_id_reference"
-                                        class="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none transition-colors"
+                                        class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-karam-green focus:outline-none transition-colors"
                                         value="{{ old('transaction_id_reference') }}" required>
                                     @error('transaction_id_reference')
                                         <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
@@ -236,13 +236,13 @@
                                         (Optional)
                                     </label>
                                     <textarea name="notes" id="notes" rows="3"
-                                        class="w-full bg-[#0f0f0f] border border-gray-700 rounded-lg p-3 text-white focus:border-cyan-500 focus:outline-none transition-colors">{{ old('notes') }}</textarea>
+                                        class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-karam-green focus:outline-none transition-colors">{{ old('notes') }}</textarea>
                                     @error('notes')
                                         <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <button type="submit"
-                                    class="w-full bg-cyan-500 text-black py-3 rounded-lg font-bold hover:bg-cyan-400 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)]">Confirm Local
+                                    class="w-full bg-karam-green text-black py-3 rounded-lg font-bold hover:bg-karam-green/90 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)]">Confirm Local
                                     Payment</button>
                             </form>
                         </div>
@@ -277,7 +277,7 @@
 
                             <div class="text-center mb-6">
                                 <span
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-cyan-900/20 text-cyan-300 border border-cyan-800/50">
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-karam-green/90 text-karam-green border border-karam-green/50">
                                     <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -289,11 +289,11 @@
                             <!-- Mock Global Payment Button (local/testing only) -->
                             @if (! app()->environment('production'))
                                 <button @click="mockGlobalPaymentSuccess()"
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition duration-300 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+                                    class="w-full bg-karam-green hover:bg-karam-green/90 text-black py-3 rounded-lg font-bold transition duration-300 shadow-[0_0_15px_rgba(0,135,81,0.2)]">
                                     Pay Securely Now (DEV ONLY)
                                 </button>
                             @else
-                                <div class="w-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 py-3 px-4 rounded-lg text-sm text-center">
+                                <div class="w-full bg-gray-900/50 border border-gray-700/30 text-gray-300 py-3 px-4 rounded-lg text-sm text-center">
                                     This item requires manual bank-transfer verification. Submit your
                                     receipt above and our team will activate your license within 24 hours.
                                 </div>
@@ -332,11 +332,11 @@
         }
 
         .payment-card:hover {
-            @apply border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.1)] transform -translate-y-1;
+            @apply border-karam-green/50 shadow-[0_0_15px_rgba(0,135,81,0.1)] transform -translate-y-1;
         }
 
         .copy-btn {
-            @apply mt-3 inline-flex items-center px-3 py-1.5 border border-cyan-500/30 text-xs font-medium rounded-md shadow-sm text-cyan-400 bg-cyan-900/20 hover:bg-cyan-900/40 focus:outline-none transition-colors;
+            @apply mt-3 inline-flex items-center px-3 py-1.5 border border-gray-700/30 text-xs font-medium rounded-md shadow-sm text-karam-green bg-gray-900/20 hover:bg-gray-800/40 focus:outline-none transition-colors;
         }
     </style>
 @endsection

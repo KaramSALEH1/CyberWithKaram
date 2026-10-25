@@ -8,7 +8,7 @@
             'active' => 'bg-green-500/10 text-green-400 border-green-500/30',
             'expiring' => 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
             'expired' => 'bg-red-500/10 text-red-400 border-red-500/30',
-            'pending' => 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+            'pending' => 'bg-karam-green-500/10 text-karam-green-400 border-karam-green-500/30',
             'rejected' => 'bg-gray-500/10 text-gray-400 border-gray-500/30',
         ];
 
